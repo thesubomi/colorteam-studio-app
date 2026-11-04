@@ -1,10 +1,10 @@
 function StudioApp(){
 const [theme,setTheme]=React.useState(()=>localStorage.getItem('ctbs2_theme')||(window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'));
 React.useEffect(()=>{document.documentElement.dataset.theme=theme;localStorage.setItem('ctbs2_theme',theme);},[theme]);
-const parse=()=>{const h=location.hash.replace(/^#\/?/,'').split('/');if(h[0]==='file'&&h[1])return {name:'file',id:decodeURIComponent(h[1])};if(h[0]==='calendar')return {name:'calendar'};if(h[0]==='login')return {name:'login'};if(h[0]==='guidelines')return {name:'guidelines'};if(h[0]==='admin')return {name:'admin'};return {name:'home'};};
+const parse=()=>{const h=location.hash.replace(/^#\/?/,'').split('/');if(h[0]==='file'&&h[1])return {name:'file',id:decodeURIComponent(h[1])};if(h[0]==='calendar')return {name:'calendar'};if(h[0]==='login')return {name:'login'};if(h[0]==='guidelines')return {name:'guidelines'};if(h[0]==='admin')return {name:'admin'};if(h[0]==='team')return {name:'team'};return {name:'home'};};
 const [route,setRoute]=React.useState(parse);
 React.useEffect(()=>{const h=()=>setRoute(parse());window.addEventListener('hashchange',h);return()=>window.removeEventListener('hashchange',h);},[]);
-const go=r=>{location.hash=r.name==='file'?'/file/'+encodeURIComponent(r.id):r.name==='calendar'?'/calendar':r.name==='guidelines'?'/guidelines':r.name==='admin'?'/admin':'/';};
+const go=r=>{location.hash=r.name==='file'?'/file/'+encodeURIComponent(r.id):r.name==='calendar'?'/calendar':r.name==='guidelines'?'/guidelines':r.name==='admin'?'/admin':r.name==='team'?'/team':'/';};
 const [user,setUser]=React.useState(undefined);const [authErr,setAuthErr]=React.useState('');
 React.useEffect(()=>CTS.onAuth((u,e)=>{setUser(u||null);setAuthErr(e||'');}),[]);
 const [wsTick,setWsTick]=React.useState(0);React.useEffect(()=>CTS.subscribeWorkspace(()=>setWsTick(x=>x+1)),[]);
@@ -23,5 +23,5 @@ if(user===undefined)return <div className="boot"></div>;
 if(!user||route.name==='login')return <HmLogin err={authErr} theme={theme} preview={!!user} onDone={()=>go({name:'home'})}/>;
 if(route.name==='file'){if(!files.some(f=>f.id===route.id))return <div className="boot col"><p className="muted">Opening file…</p><button className="btn" onClick={()=>go({name:'home'})}>Back to files</button></div>;
  return <><Editor key={route.id} fileId={route.id} files={files} presence={presence} library={library} toast={toast} theme={theme} setTheme={setTheme} onBack={()=>go({name:'home'})} onJoin={join} followInit={follow} clearFollow={()=>setFollow(null)} team={team} cmReq={cmReq} onOpenComment={openComment}/>{toastEl}</>;}
-return <div className="shell"><HmBar route={route.name} go={go} presence={presence} onJoin={join} theme={theme} setTheme={setTheme} files={files} onOpenComment={openComment}/>{route.name==='admin'&&CTS.isStaff?<HmAdmin go={go} toast={toast}/>:route.name==='guidelines'?<HmGuidelines toast={toast}/>:route.name==='calendar'?<HmCalendar files={files} go={go} save={save}/>:<HmHome files={files} presence={presence} go={go} newFile={newFile} onJoin={join} del={del}/>}{toastEl}</div>;}
+return <div className="shell"><HmBar route={route.name} go={go} presence={presence} onJoin={join} theme={theme} setTheme={setTheme} files={files} onOpenComment={openComment}/>{route.name==='admin'&&CTS.isStaff?<HmAdmin go={go} toast={toast}/>:route.name==='team'?<HmTeam toast={toast}/>:route.name==='guidelines'?<HmGuidelines toast={toast}/>:route.name==='calendar'?<HmCalendar files={files} go={go} save={save}/>:<HmHome files={files} presence={presence} go={go} newFile={newFile} onJoin={join} del={del}/>}{toastEl}</div>;}
 ReactDOM.createRoot(document.getElementById('root')).render(<StudioApp/>);
