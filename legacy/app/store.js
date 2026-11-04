@@ -52,6 +52,7 @@ if(!cloud){
  S.sendLink=async e=>{const m=e.trim().toLowerCase();localStorage.setItem(LS_U,JSON.stringify({email:m}));login(m);};
  S.signInGoogle=()=>S.sendLink('subomi@colorteam.io');
  S.signOut=async()=>{localStorage.removeItem(LS_U);S.me=null;S.role=null;authCb&&authCb(null);};
+ S.updateName=async name=>{S.me={...S.me,name:name.trim()||S.me.name};};S.resetPassword=async()=>{};S.setPassword=async()=>{};
  S.team=async()=>TEAM;
  S.createFile=async x=>{const id='f-'+Date.now().toString(36);const t=iso();files=[{...x,id,owner:'me',ownerName:S.me.name,updatedBy:S.me.name,createdAt:t,updatedAt:t,status:'draft',comment:''},...files];persist();pubFiles();return id;};
  S.saveFile=async(id,x)=>{files=files.map(f=>f.id===id?{...f,...x}:f);persist();pubFiles();};
@@ -94,6 +95,9 @@ if(!cloud){
  S.signInGoogle=async()=>{const {error}=await sb.auth.signInWithOAuth({provider:'google',options:{redirectTo:location.origin+location.pathname,queryParams:{prompt:'select_account'}}});if(error)throw error;};
  S.sendLink=async e=>{const {error}=await sb.auth.signInWithOtp({email:e.trim().toLowerCase(),options:{emailRedirectTo:location.origin+location.pathname}});if(error)throw error;};
  S.signOut=async()=>{stopLive();S.role=null;await sb.auth.signOut();};
+ S.updateName=async name=>{name=name.trim();if(!name)return;const {error}=await sb.auth.updateUser({data:{full_name:name}});if(error)throw error;if(workspace){await sb.from('memberships').update({name}).eq('workspace_id',workspace.id).eq('email',S.me.email);}S.me={...S.me,name};track();};
+ S.resetPassword=async()=>{const {error}=await sb.auth.resetPasswordForEmail(S.me.email,{redirectTo:location.origin+location.pathname});if(error)throw error;};
+ S.setPassword=async pw=>{const {error}=await sb.auth.updateUser({password:pw});if(error)throw error;};
  S.team=async()=>{const {data}=await sb.from('memberships').select('email,name,role').eq('workspace_id',workspace.id);return (data||[]).map(m=>({email:m.email,name:m.name,role:m.role==='editor'?'designer':'approver'}));};
  S.setWorkspace=slug=>{const w=workspaces.find(x=>x.slug===slug);if(!w||!workspace||w.id===workspace.id)return;workspace=w;localStorage.setItem(LS_WS,slug);S.role=(isStaff||w.role==='owner'||w.role==='approver')?'approver':'designer';files=[];library=[];pubFiles();pubLib();stopLive();startLive();loadFiles();loadLib();emit('workspace',workspace);};
  S.admin={
