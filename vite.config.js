@@ -6,7 +6,7 @@ import { transform } from 'esbuild';
 
 // The Studio screens were written as browser globals (one <script type="text/babel"> per file).
 // This plugin joins them into one module so they keep sharing a scope, and Vite compiles the JSX.
-const ORDER = ['config.js','store.js','templates.jsx','canvas.jsx','comments.jsx','inspector.jsx','editor.jsx','home.jsx','guidelines.jsx','admin.jsx','kit.jsx','app.jsx'];
+const ORDER = ['config.js','store.js','templates.jsx','canvas.jsx','comments.jsx','inspector.jsx','editor.jsx','home.jsx','guidelines.jsx','admin.jsx','kit.jsx','foundation.jsx','app.jsx'];
 function legacyBundle(){
   const id = 'virtual:studio-legacy.jsx';
   return {
