@@ -1,0 +1,5 @@
+/* Brand primary: Inter (replaces SF Pro Display, per 2026 typography update). Serif: Newsreader. */
+@font-face{font-family:"Inter";font-style:normal;font-weight:100 900;font-display:swap;src:url("../fonts/Inter-normal-latin.woff2") format("woff2")}
+@font-face{font-family:"Inter";font-style:italic;font-weight:100 900;font-display:swap;src:url("../fonts/Inter-italic-latin.woff2") format("woff2")}
+@font-face{font-family:"Newsreader";font-style:normal;font-weight:200 800;font-display:swap;src:url("../fonts/Newsreader-normal-latin.woff2") format("woff2")}
+@font-face{font-family:"Newsreader";font-style:italic;font-weight:200 800;font-display:swap;src:url("../fonts/Newsreader-italic-latin.woff2") format("woff2")}

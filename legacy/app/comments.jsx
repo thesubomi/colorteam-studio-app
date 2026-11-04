@@ -1,0 +1,47 @@
+const cmId=()=>'c-'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+function cmMerge(a,b){a=a||[];b=b||[];const m=new Map();for(const t of a)m.set(t.id,t);for(const t of b){const o=m.get(t.id);if(!o){m.set(t.id,t);continue;}const r=new Map();for(const x of o.replies||[])r.set(x.id,x);for(const x of t.replies||[]){const y=r.get(x.id);r.set(x.id,y?(String(x.updatedAt||x.at)>String(y.updatedAt||y.at)?x:y):x);}const base=String(t.updatedAt||t.at)>String(o.updatedAt||o.at)?t:o;m.set(t.id,{...base,replies:[...r.values()].sort((p,q)=>String(p.at).localeCompare(String(q.at)))});}return [...m.values()].sort((p,q)=>String(p.at).localeCompare(String(q.at)));}
+const cmMentions=(text,team)=>(team||[]).filter(m=>text.includes('@'+m.name)).map(m=>m.email);
+const cmOpenCount=f=>(f.comments||[]).filter(t=>!t.deleted&&!t.resolved).length;
+function cmInbox(files,me){const out=[];if(!me)return out;for(const f of files)for(const t of f.comments||[]){if(t.deleted)continue;const items=[t,...(t.replies||[])].filter(c=>!c.deleted);const inThread=items.some(x=>x.email===me.email);items.forEach((c,i)=>{if(c.email===me.email)return;const mention=(c.mentions||[]).includes(me.email);if(mention||f.owner===me.uid||inThread)out.push({file:f,thread:t,c,mention,reply:i>0});});}return out.sort((a,b)=>String(b.c.at).localeCompare(String(a.c.at))).slice(0,40);}
+function CmText({text,team}){const names=(team||[]).map(m=>m.name).filter(Boolean).sort((a,b)=>b.length-a.length).map(n=>n.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'));if(!names.length)return <>{text}</>;const re=new RegExp('(@(?:'+names.join('|')+'))','g');return <>{String(text).split(re).map((s,i)=>i%2?<span key={i} className="mention">{s}</span>:<React.Fragment key={i}>{s}</React.Fragment>)}</>;}
+
+function MentionBox({team,value,onChange,onSubmit,placeholder,autoFocus,submitLabel='Post',onCancel}){
+const ref=React.useRef(null);const [q,setQ]=React.useState(null);const [i,setI]=React.useState(0);
+const me=CTS.me;const pool=(team||[]).filter(m=>m.email!==(me&&me.email));
+const opts=q==null?[]:pool.filter(m=>m.name.toLowerCase().includes(q.toLowerCase())||m.email.includes(q.toLowerCase())).slice(0,6);
+const detect=(val,pos)=>{const mm=val.slice(0,pos).match(/(^|\s)@([^\s@]{0,30})$/);setQ(mm?mm[2]:null);setI(0);};
+const pick=m=>{const el=ref.current;const pos=el.selectionStart;const before=value.slice(0,pos).replace(/@([^\s@]{0,30})$/,'@'+m.name+' ');onChange(before+value.slice(pos));setQ(null);requestAnimationFrame(()=>{el.focus();el.setSelectionRange(before.length,before.length);});};
+const insertAt=()=>{const el=ref.current;const pos=el.selectionStart??value.length;const pre=value.slice(0,pos);const ins=(pre&&!/\s$/.test(pre)?' ':'')+'@';const nv=pre+ins+value.slice(pos);onChange(nv);setQ('');requestAnimationFrame(()=>{el.focus();const p=pos+ins.length;el.setSelectionRange(p,p);});};
+const key=e=>{if(opts.length){if(e.key==='ArrowDown'){e.preventDefault();setI((i+1)%opts.length);return;}if(e.key==='ArrowUp'){e.preventDefault();setI((i-1+opts.length)%opts.length);return;}if(e.key==='Enter'||e.key==='Tab'){e.preventDefault();pick(opts[i]);return;}}if(e.key==='Escape'){e.preventDefault();e.stopPropagation();if(q!=null)setQ(null);else onCancel&&onCancel();return;}if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();if(value.trim())onSubmit();}};
+return <div className="mbox"><textarea ref={ref} className="f-in" rows={2} autoFocus={autoFocus} placeholder={placeholder} value={value} onChange={e=>{onChange(e.target.value);detect(e.target.value,e.target.selectionStart);}} onKeyDown={key} onClick={e=>detect(value,e.target.selectionStart)}></textarea>
+{opts.length>0&&<div className="mdrop">{opts.map((m,k)=><button key={m.email} className={k===i?'on':''} onMouseDown={e=>{e.preventDefault();pick(m);}}><Avatar p={{name:m.name,color:CTS.colorFor(m.email)}} size={20}/><span className="md-n">{m.name}</span><em>{m.role==='approver'?'Approver':''}</em></button>)}</div>}
+<div className="mbox-f"><button className="icon-btn xs" title="Mention someone" onMouseDown={e=>{e.preventDefault();insertAt();}}><UiIcon n="at-sign" s={14}/></button><span className="muted">Enter to post · Shift+Enter for a new line</span><button className="btn xs primary" disabled={!value.trim()} onClick={onSubmit}>{submitLabel}</button></div></div>;}
+
+function CmItem({c,team,canDelete,onDelete}){return <div className="cm-i"><Avatar p={{name:c.name,color:CTS.colorFor(c.email),photo:c.photo}} size={24}/><div className="cm-b"><div className="cm-m"><b>{c.name}</b><span>{fmtRel(c.at)}</span>{canDelete&&<button className="lnk cm-del" onClick={onDelete}>Delete</button>}</div><p><CmText text={c.text} team={team}/></p></div></div>;}
+
+function CmThread({t,team,onReply,onResolve,onDelete,onDeleteReply,onClose}){const [txt,setTxt]=React.useState('');const me=CTS.me;
+const items=[t,...(t.replies||[])].filter(c=>!c.deleted);
+return <div className="thread" onPointerDown={e=>e.stopPropagation()}>
+<div className="th-h"><span>{t.resolved?'Resolved':'Comment'}</span><div className="row"><button className="icon-btn xs" title={t.resolved?'Reopen':'Resolve'} onClick={onResolve}><UiIcon n={t.resolved?'rotate-ccw':'check'} s={14}/></button><button className="icon-btn xs" title="Close" onClick={onClose}><UiIcon n="x" s={14}/></button></div></div>
+<div className="th-list">{items.map((c,i)=><CmItem key={c.id} c={c} team={team} canDelete={c.email===me.email||CTS.isApprover()} onDelete={()=>i===0?onDelete():onDeleteReply(c.id)}/>)}</div>
+<MentionBox team={team} value={txt} onChange={setTxt} onSubmit={()=>{onReply(txt.trim());setTxt('');}} onCancel={onClose} placeholder="Reply… Type @ to mention" submitLabel="Reply" autoFocus/>
+</div>;}
+
+function CmNew({team,onSubmit,onCancel}){const [txt,setTxt]=React.useState('');return <div className="thread" onPointerDown={e=>e.stopPropagation()}><MentionBox team={team} value={txt} onChange={setTxt} onSubmit={()=>onSubmit(txt.trim())} onCancel={onCancel} placeholder="Add a comment. Type @ to mention someone" autoFocus/></div>;}
+
+function CmPin({c,n,open,onClick,resolved}){return <button className={'pin'+(open?' open':'')+(resolved?' res':'')} onPointerDown={e=>{e.stopPropagation();onClick&&onClick();}} title={c?c.name:''}>{c?<Avatar p={{name:c.name,color:CTS.colorFor(c.email),photo:c.photo}} size={24}/>:<span className="pin-new"></span>}{n>0&&<i>{n+1}</i>}</button>;}
+
+function CmPanel({file,frames,team,openId,onOpen,showResolved,setShowResolved,setMode}){const ts=(file.comments||[]).filter(t=>!t.deleted);const shown=ts.filter(t=>showResolved||!t.resolved).slice().reverse();const nRes=ts.filter(t=>t.resolved).length;
+return <section className="sec"><div className="sec-h"><span>Comments</span><label className="tog"><input type="checkbox" checked={showResolved} onChange={e=>setShowResolved(e.target.checked)}/>Show resolved{nRes?` (${nRes})`:''}</label></div>
+<button className="btn sm" onClick={()=>setMode('comment')}><UiIcon n="message-circle-plus" s={14}/>Add comment<kbd>C</kbd></button>
+{shown.length===0?<p className="muted">No comments yet. Press C, then click anywhere on a frame. Type @ to tag someone.</p>:<div className="cm-list">{shown.map(t=>{const fr=frames.find(f=>f.key===t.fk);const reps=(t.replies||[]).filter(r=>!r.deleted).length;return <button key={t.id} className={'cm-row'+(openId===t.id?' on':'')+(t.resolved?' res':'')} onClick={()=>onOpen(t.id)}><Avatar p={{name:t.name,color:CTS.colorFor(t.email),photo:t.photo}} size={24}/><span className="cm-rb"><span className="cm-m"><b>{t.name}</b><span>{fmtRel(t.at)}</span></span><span className="cm-tx"><CmText text={t.text} team={team}/></span><span className="cm-meta">{fr?CT_SIZES[fr.size].label+(fr.n>1?` · ${fr.page+1}/${fr.n}`:''):'Frame removed'}{reps?` · ${reps} repl${reps>1?'ies':'y'}`:''}{t.resolved?' · Resolved':''}</span></span></button>;})}</div>}
+</section>;}
+
+function CmInbox({files,onOpen}){const me=CTS.me;const [open,setOpen]=React.useState(false);const ref=useDismiss(open,setOpen);
+const [seen,setSeen]=React.useState(()=>localStorage.getItem('ctbs2_inbox_seen')||'');
+const items=cmInbox(files,me);const unread=items.filter(x=>String(x.c.at)>seen).length;
+const toggle=()=>{if(open){const t=new Date().toISOString();localStorage.setItem('ctbs2_inbox_seen',t);setSeen(t);}setOpen(o=>!o);};
+return <div className="pop-wrap" ref={ref}><button className="icon-btn bell" title="Notifications" onClick={toggle}><UiIcon n="bell"/>{unread>0&&<i>{unread>9?'9+':unread}</i>}</button>
+{open&&<div className="menu inbox"><div className="inbox-h"><b>Notifications</b>{unread>0&&<button className="lnk" onClick={()=>{const t=new Date().toISOString();localStorage.setItem('ctbs2_inbox_seen',t);setSeen(t);}}>Mark all read</button>}</div>
+{items.length===0?<p className="muted inbox-e">When someone mentions you or comments on your files, it shows up here.</p>:<div className="inbox-l">{items.map(x=><button key={x.c.id} className={String(x.c.at)>seen?'un':''} onClick={()=>{setOpen(false);onOpen(x.file.id,x.thread.id);}}><Avatar p={{name:x.c.name,color:CTS.colorFor(x.c.email),photo:x.c.photo}} size={28}/><span className="ib-b"><span className="ib-t"><b>{x.c.name}</b> {x.mention?'mentioned you':x.reply?'replied':'commented'} in <b>{x.file.title}</b></span><span className="ib-x">{x.c.text}</span><span className="ib-at">{fmtRel(x.c.at)}</span></span></button>)}</div>}</div>}</div>;}
+Object.assign(window,{cmId,cmMerge,cmMentions,cmOpenCount,cmInbox,CmText,MentionBox,CmThread,CmNew,CmPin,CmPanel,CmInbox});

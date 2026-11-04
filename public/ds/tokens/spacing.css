@@ -1,0 +1,19 @@
+:root{
+--space-1:4px;--space-2:8px;--space-3:12px;--space-4:16px;--space-5:24px;--space-6:32px;--space-7:48px;--space-8:64px;--space-9:96px;--space-10:128px;
+/* Page frame: guide pages use ~104px side margin on 1920 (≈5.4%) with corner meta labels */
+--frame-margin:clamp(20px,5.4vw,104px);--frame-margin-y:clamp(20px,6vw,120px);
+--content-max:1712px; /* @kind spacing */
+/* Radii */
+--radius-chip:2px;--radius-sm:6px;--radius-md:12px;--radius-lg:20px;--radius-xl:28px;--radius-pill:999px;--radius-squircle:24%;
+/* Lines */
+--stroke-guide:1px;--stroke-frame:2px;
+/* Shadow: the brand is flat. Only device/photo mockups lift. */
+--shadow-none:none;--shadow-mockup:0 24px 60px rgba(0,0,0,.35);
+--glow-lime:0 0 48px rgba(168,252,120,.45);
+/* Motion */
+--ease-out:cubic-bezier(.2,.7,.2,1); /* @kind other */
+--ease-in-out:cubic-bezier(.65,0,.35,1); /* @kind other */
+--dur-fast:140ms; /* @kind other */
+--dur-base:240ms; /* @kind other */
+--dur-slow:480ms; /* @kind other */
+}
