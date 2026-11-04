@@ -9,8 +9,11 @@ const emit=(e,d)=>{(bus[e]||[]).forEach(f=>{try{f(d);}catch(err){console.error(e
 const autoTitle=(tpl,f)=>{const v=Object.values(f||{}).find(x=>typeof x==='string'&&x.trim())||'';return tpl.name+' — '+v.replace(/\*/g,'').split('\n')[0].slice(0,40);};
 function norm(list){const T=window.CT_TEMPLATES||[];if(!T.length)return [];return list.map(f=>{const tpl=T.find(t=>t.id===f.tplId);if(!tpl)return null;const fields={...window.ctDefaults(tpl),...(f.fields||{})};let sizes=(f.sizes||[]).filter(s=>tpl.sizes.includes(s));if(!sizes.length)sizes=tpl.sizes.slice();return {...f,fields,sizes,theme:+f.theme||0,offsets:f.offsets||{},versions:f.versions||[],comments:f.comments||[],title:f.title||autoTitle(tpl,fields),status:['pending','approved','changes'].includes(f.status)?f.status:'draft',schedule:f.schedule||null};}).filter(Boolean).sort((a,b)=>String(b.updatedAt||'').localeCompare(String(a.updatedAt||'')));}
 let files=[],library=[],presence=[],mine={docId:null,docTitle:''},authCb=null;
+let workspaces=[],workspace=null,isStaff=false;const LS_WS='ctbs2_ws';
 const S={mode:cloud?'cloud':'local',approverName:C.approverName||'Subomi',google:!!C.googleSignIn,colorFor,autoTitle,me:null,role:null,
  isApprover(){return S.role==='approver';},
+ get workspaces(){return workspaces;},get workspace(){return workspace;},get isStaff(){return isStaff;},
+ subscribeWorkspace(f){f(workspace);return on('workspace',f);},
  subscribeFiles(f){f(norm(files));return on('files',f);},
  subscribeLibrary(f){f(library.slice());return on('library',f);},
  subscribePresence(f){f(presence.slice());return on('presence',f);},
@@ -42,6 +45,8 @@ if(!cloud){
  const persist=()=>saveLS(LS_F,files,v=>v.map(f=>({...f,photo:f.photo&&f.photo.startsWith('data:')?null:f.photo,versions:(f.versions||[]).slice(0,3)})));
  const persistLib=()=>saveLS(LS_L,library,v=>v.slice(0,6));
  const mkMe=e=>{const n=e.split('@')[0].replace(/[._\d]+/g,' ').trim().replace(/\b\w/g,c=>c.toUpperCase());return {uid:'me',email:e,name:/^subomi/i.test(n)?'Subomi':(n||'You'),photo:null,color:colorFor(e)};};
+ workspaces=[{id:'ws-colorteam',slug:'colorteam',name:'Colorteam',plan:'internal',role:'owner'}];workspace=workspaces[0];isStaff=true;
+ S.setWorkspace=()=>{};S.admin={async list(){return workspaces.map(w=>({...w,members:3,files:files.length,pending:files.filter(f=>f.status==='pending').length}));},async create(){throw new Error('Demo mode');},async members(){return TEAM.map(t=>({email:t.email,name:t.name,role:t.role==='approver'?'owner':'editor'}));},async addMember(){throw new Error('Demo mode');},async removeMember(){throw new Error('Demo mode');}};
  const login=e=>{const u=mkMe(e);S.me=u;S.role='approver';buildPresence();authCb&&authCb(u);};
  S.onAuth=cb=>{authCb=cb;setTimeout(()=>{let s=null;try{s=JSON.parse(localStorage.getItem(LS_U));}catch(e){}if(s&&s.email)login(s.email);else cb(null);},0);return()=>{authCb=null;};};
  S.sendLink=async e=>{const m=e.trim().toLowerCase();localStorage.setItem(LS_U,JSON.stringify({email:m}));login(m);};
@@ -64,12 +69,22 @@ if(!cloud){
  const sb=window.supabase.createClient(C.supabase.url,C.supabase.anonKey);
  let live=null,filesCh=null,libCh=null,lt=null;
  const fromRow=r=>{const d=r.data||{};return {...d,id:r.id,owner:r.uid,email:r.email,status:r.status,comment:r.comment||'',createdAt:r.at,updatedAt:d.updatedAt||r.at,ownerName:d.ownerName||d.by||(r.email||'').split('@')[0]};};
- const loadFiles=async()=>{const {data,error}=await sb.from('requests').select('*');if(error){console.error(error);return;}files=data.map(fromRow);pubFiles();};
+ const loadFiles=async()=>{if(!workspace)return;const {data,error}=await sb.from('requests').select('*').eq('workspace_id',workspace.id);if(error){console.error(error);return;}files=data.map(fromRow);pubFiles();};
  const loadFilesSoon=()=>{clearTimeout(lt);lt=setTimeout(loadFiles,250);};
- const loadLib=async()=>{const {data,error}=await sb.from('library').select('*').order('at',{ascending:false});if(error){console.warn('library',error.message);return;}library=data.map(r=>({id:r.id,kind:r.kind,name:r.name,src:r.src,by:r.by_name,at:r.at}));pubLib();};
- async function resolve(session){if(!session)return {user:null};const u=session.user;const {data,error}=await sb.from('members').select('role,name').eq('email',u.email.toLowerCase()).maybeSingle();if(error||!data){await sb.auth.signOut();return {user:null,err:'This account has not been invited to Brand Studio. Ask '+S.approverName+' to add '+u.email+'.'};}S.role=data.role;const m=u.user_metadata||{};return {user:{uid:u.id,email:u.email,name:data.name||m.full_name||m.name||u.email.split('@')[0],photo:m.avatar_url||m.picture||null,color:colorFor(u.email)}};}
+ const loadLib=async()=>{if(!workspace)return;const {data,error}=await sb.from('library').select('*').eq('workspace_id',workspace.id).order('at',{ascending:false});if(error){console.warn('library',error.message);return;}library=data.map(r=>({id:r.id,kind:r.kind,name:r.name,src:r.src,by:r.by_name,at:r.at}));pubLib();};
+ async function resolve(session){if(!session)return {user:null};const u=session.user;const email=u.email.toLowerCase();
+  const [{data:ms,error:e1},{data:st}]=await Promise.all([sb.from('memberships').select('role,name,workspaces(id,slug,name,plan)').eq('email',email),sb.from('staff').select('email,name').eq('email',email).maybeSingle()]);
+  if(e1){console.error(e1);}
+  isStaff=!!st;
+  let list=(ms||[]).filter(x=>x.workspaces).map(x=>({...x.workspaces,role:x.role,memberName:x.name}));
+  if(isStaff){const {data:all}=await sb.from('workspaces').select('id,slug,name,plan').order('name');list=(all||[]).map(w=>{const mine=list.find(x=>x.id===w.id);return {...w,role:mine?mine.role:'staff'};});}
+  if(!list.length){await sb.auth.signOut();return {user:null,err:'This account has not been invited to Brand Studio. Ask '+S.approverName+' for an invite.'};}
+  workspaces=list;const want=localStorage.getItem(LS_WS);workspace=list.find(w=>w.slug===want)||list[0];
+  const name=(st&&st.name)||(workspace.memberName)||u.user_metadata&&u.user_metadata.full_name||email.split('@')[0];
+  S.role=(isStaff||workspace.role==='owner'||workspace.role==='approver')?'approver':'designer';
+  return {user:{uid:u.id,email,name,photo:u.user_metadata&&u.user_metadata.avatar_url||null,color:colorFor(email)}};}
  const track=()=>{if(live&&S.me)live.track({uid:S.me.uid,name:S.me.name,photo:S.me.photo,color:S.me.color,docId:mine.docId,docTitle:mine.docTitle,at:iso()});};
- function startLive(){if(live)return;live=sb.channel('studio-live',{config:{presence:{key:S.me.uid},broadcast:{self:false}}});
+ function startLive(){if(live)return;live=sb.channel('studio-live-'+workspace.slug,{config:{presence:{key:S.me.uid},broadcast:{self:false}}});
   live.on('presence',{event:'sync'},()=>{const st=live.presenceState();presence=Object.values(st).map(a=>a[a.length-1]).map(p=>({...p,me:p.uid===S.me.uid}));emit('presence',presence.slice());})
    .on('broadcast',{event:'cursor'},({payload})=>emit('cursor',payload))
    .on('broadcast',{event:'edit'},({payload})=>emit('edit',payload))
@@ -79,12 +94,21 @@ if(!cloud){
  S.signInGoogle=async()=>{const {error}=await sb.auth.signInWithOAuth({provider:'google',options:{redirectTo:location.origin+location.pathname,queryParams:{prompt:'select_account'}}});if(error)throw error;};
  S.sendLink=async e=>{const {error}=await sb.auth.signInWithOtp({email:e.trim().toLowerCase(),options:{emailRedirectTo:location.origin+location.pathname}});if(error)throw error;};
  S.signOut=async()=>{stopLive();S.role=null;await sb.auth.signOut();};
- S.team=async()=>{const {data}=await sb.from('members').select('email,name,role');return data||[];};
+ S.team=async()=>{const {data}=await sb.from('memberships').select('email,name,role').eq('workspace_id',workspace.id);return (data||[]).map(m=>({email:m.email,name:m.name,role:m.role==='editor'?'designer':'approver'}));};
+ S.setWorkspace=slug=>{const w=workspaces.find(x=>x.slug===slug);if(!w||!workspace||w.id===workspace.id)return;workspace=w;localStorage.setItem(LS_WS,slug);S.role=(isStaff||w.role==='owner'||w.role==='approver')?'approver':'designer';files=[];library=[];pubFiles();pubLib();stopLive();startLive();loadFiles();loadLib();emit('workspace',workspace);};
+ S.admin={
+  async list(){const [{data:ws},{data:ms},{data:rq}]=await Promise.all([sb.from('workspaces').select('id,slug,name,plan,created_at').order('name'),sb.from('memberships').select('workspace_id'),sb.from('requests').select('workspace_id,status')]);
+   return (ws||[]).map(w=>({...w,members:(ms||[]).filter(m=>m.workspace_id===w.id).length,files:(rq||[]).filter(r=>r.workspace_id===w.id).length,pending:(rq||[]).filter(r=>r.workspace_id===w.id&&r.status==='pending').length}));},
+  async create({slug,name,plan}){const {data,error}=await sb.from('workspaces').insert({slug,name,plan:plan||'core'}).select('id,slug,name,plan').single();if(error)throw error;workspaces=[...workspaces,{...data,role:'staff'}];return data;},
+  async members(wsId){const {data,error}=await sb.from('memberships').select('email,name,role,created_at').eq('workspace_id',wsId).order('created_at');if(error)throw error;return data||[];},
+  async addMember(wsId,{email,name,role}){const {error}=await sb.from('memberships').upsert({workspace_id:wsId,email:email.trim().toLowerCase(),name:name||null,role:role||'editor'});if(error)throw error;},
+  async removeMember(wsId,email){const {error}=await sb.from('memberships').delete().eq('workspace_id',wsId).eq('email',email);if(error)throw error;}
+ };
  const split=x=>{const {id,owner,email,status,comment,createdAt,...data}=x;return {data,status:status||'draft',comment:comment||''};};
- S.createFile=async x=>{const t=iso();const s=split({...x,ownerName:S.me.name,updatedBy:S.me.name,updatedAt:t});const {data,error}=await sb.from('requests').insert({data:s.data,email:S.me.email,status:'draft',comment:''}).select('*').single();if(error)throw error;files=[fromRow(data),...files];pubFiles();return data.id;};
+ S.createFile=async x=>{const t=iso();const s=split({...x,ownerName:S.me.name,updatedBy:S.me.name,updatedAt:t});const {data,error}=await sb.from('requests').insert({data:s.data,email:S.me.email,status:'draft',comment:'',workspace_id:workspace.id}).select('*').single();if(error)throw error;files=[fromRow(data),...files];pubFiles();return data.id;};
  S.saveFile=async(id,x)=>{const cur=files.find(f=>f.id===id)||{};const full={...cur,...x};files=files.map(f=>f.id===id?full:f);pubFiles();const {error}=await sb.from('requests').update(split(full)).eq('id',id);if(error)throw error;};
  S.deleteFile=async id=>{const {error}=await sb.from('requests').delete().eq('id',id);if(error)throw error;files=files.filter(f=>f.id!==id);pubFiles();};
- S.addLibrary=async it=>{const {error}=await sb.from('library').insert({kind:it.kind,name:it.name,src:it.src,by_name:S.me.name});if(error)throw error;loadLib();};
+ S.addLibrary=async it=>{const {error}=await sb.from('library').insert({kind:it.kind,name:it.name,src:it.src,by_name:S.me.name,workspace_id:workspace.id});if(error)throw error;loadLib();};
  S.removeLibrary=async id=>{const {error}=await sb.from('library').delete().eq('id',id);if(error)throw error;loadLib();};
  S.setPresence=p=>{mine=p;track();};
  S.sendCursor=p=>{if(live)live.send({type:'broadcast',event:'cursor',payload:{...p,uid:S.me.uid}});};
