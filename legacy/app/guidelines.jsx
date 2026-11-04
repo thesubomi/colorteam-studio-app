@@ -6,7 +6,13 @@ const GL_LOGOS=[['Wordmark, white','assets/brand26/wordmark-white.svg','#0A0A0A'
 const GL_IMG=[['Documentary studio','assets/imagery/heather-winkle.png','#161616',false],['Cut-out portrait with outline','assets/imagery/portrait-cutout-woman-desaturated.png','#F3F2E6',true],['Editorial cut-out','assets/imagery/portrait-cutout-man-chair.png','#DEDCD0',false]];
 const GL_APPS=[['quote',0,'post'],['podcast',3,'post'],['case',0,'post'],['hiring',2,'post'],['reel',3,'story'],['proposal',0,'a4']];
 
-function HmGuidelines({toast}){
+function HmGuidelines({toast}){const ws=CTS.workspace;if(ws&&ws.slug!=='colorteam')return <WsGuidelines toast={toast}/>;return <HmGuidelinesColorteam toast={toast}/>;}
+function WsGuidelines({toast}){const ws=CTS.workspace;const [url,setUrl]=React.useState(null);const [busy,setBusy]=React.useState(false);const canUpload=CTS.isStaff||ws.role==='owner';const st=ws.settings||{};
+React.useEffect(()=>{let on=true;setUrl(null);CTS.guidelines.url().then(u=>{if(on)setUrl(u);}).catch(e=>toast(e.message));return()=>{on=false;};},[ws.id,st.guidelines]);
+const pick=async e=>{const f=e.target.files&&e.target.files[0];if(!f)return;setBusy(true);try{await CTS.guidelines.upload(f);toast('Guidelines uploaded');}catch(x){toast(x.message);}setBusy(false);e.target.value='';};
+return <main className="adm"><div className="adm-h"><h1>{ws.name} brand guidelines</h1><p className="muted">{st.guidelines?'Uploaded '+(st.guidelinesName||'guidelines')+' by '+(st.guidelinesBy||'the team')+(st.guidelinesAt?' on '+String(st.guidelinesAt).slice(0,10):''):'No guidelines uploaded yet.'}{canUpload&&<label className="btn sm" style={{marginLeft:10}}>{busy?'Uploading…':(st.guidelines?'Replace PDF':'Upload PDF')}<input type="file" accept="application/pdf" style={{display:'none'}} onChange={pick} disabled={busy}/></label>}</p></div>
+{st.guidelines?(url?<iframe className="gl-pdf" src={url} title="Brand guidelines"/>:<p className="muted">Loading…</p>):<section className="adm-card"><h2>Nothing here yet</h2><p className="muted">{canUpload?'Upload the brand guidelines PDF and the whole team will see it here. Once the Brand Foundation is signed off, the Colorteam team uploads the final version.':'Ask an owner or Colorteam to upload the brand guidelines.'}</p></section>}</main>;}
+function HmGuidelinesColorteam({toast}){
 const pdf=(window.CT_STUDIO_CONFIG||{}).guidelinesUrl;
 const [active,setActive]=React.useState('colour');
 React.useEffect(()=>{const h=()=>{let cur=GL_SECTIONS[0][0];for(const [id] of GL_SECTIONS){const el=document.getElementById('gl-'+id);if(el&&el.getBoundingClientRect().top<140)cur=id;}setActive(cur);};window.addEventListener('scroll',h,{passive:true});h();return()=>window.removeEventListener('scroll',h);},[]);
@@ -55,4 +61,4 @@ return <main className="gl">
 <div className="gl-rules"><div className="gl-do"><h3><UiIcon n="check" s={16}/>Do</h3><ul><li>Lead with black and stone, and highlight one or two words in pink.</li><li>Put labels in uppercase with wide tracking above headlines.</li><li>Use outline pills for tags and rounded cards for work.</li><li>Name people with their role.</li><li>Keep text inside each platform's safe zone.</li></ul></div>
 <div className="gl-dont"><h3><UiIcon n="x" s={16}/>Don't</h3><ul><li>Use pink and lime together as equals in one frame.</li><li>Put the glow behind body text.</li><li>Stretch, recolour or outline the wordmark.</li><li>Use the podcast cream for corporate posts.</li><li>Use emoji in headlines, decks or proposals.</li></ul></div></div></section>
 </div></main>;}
-Object.assign(window,{HmGuidelines});
+Object.assign(window,{HmGuidelines,WsGuidelines});

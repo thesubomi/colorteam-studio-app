@@ -46,7 +46,7 @@ if(!cloud){
  const persistLib=()=>saveLS(LS_L,library,v=>v.slice(0,6));
  const mkMe=e=>{const n=e.split('@')[0].replace(/[._\d]+/g,' ').trim().replace(/\b\w/g,c=>c.toUpperCase());return {uid:'me',email:e,name:/^subomi/i.test(n)?'Subomi':(n||'You'),photo:null,color:colorFor(e)};};
  workspaces=[{id:'ws-colorteam',slug:'colorteam',name:'Colorteam',plan:'internal',role:'owner'}];workspace=workspaces[0];isStaff=true;
- S.setWorkspace=()=>{};S.admin={async list(){return workspaces.map(w=>({...w,members:3,files:files.length,pending:files.filter(f=>f.status==='pending').length}));},async create(){throw new Error('Demo mode');},async members(){return TEAM.map(t=>({email:t.email,name:t.name,role:t.role==='approver'?'owner':'editor'}));},async addMember(){throw new Error('Demo mode');},async removeMember(){throw new Error('Demo mode');}};
+ S.setWorkspace=()=>{};S.guidelines={async url(){return null;},async upload(){throw new Error('Demo mode');}};S.admin={async list(){return workspaces.map(w=>({...w,members:3,files:files.length,pending:files.filter(f=>f.status==='pending').length}));},async create(){throw new Error('Demo mode');},async members(){return TEAM.map(t=>({email:t.email,name:t.name,role:t.role==='approver'?'owner':'editor'}));},async addMember(){throw new Error('Demo mode');},async removeMember(){throw new Error('Demo mode');}};
  const login=e=>{const u=mkMe(e);S.me=u;S.role='approver';buildPresence();authCb&&authCb(u);};
  S.onAuth=cb=>{authCb=cb;setTimeout(()=>{let s=null;try{s=JSON.parse(localStorage.getItem(LS_U));}catch(e){}if(s&&s.email)login(s.email);else cb(null);},0);return()=>{authCb=null;};};
  S.sendLink=async e=>{const m=e.trim().toLowerCase();localStorage.setItem(LS_U,JSON.stringify({email:m}));login(m);};
@@ -74,11 +74,11 @@ if(!cloud){
  const loadFilesSoon=()=>{clearTimeout(lt);lt=setTimeout(loadFiles,250);};
  const loadLib=async()=>{if(!workspace)return;const {data,error}=await sb.from('library').select('*').eq('workspace_id',workspace.id).order('at',{ascending:false});if(error){console.warn('library',error.message);return;}library=data.map(r=>({id:r.id,kind:r.kind,name:r.name,src:r.src,by:r.by_name,at:r.at}));pubLib();};
  async function resolve(session){if(!session)return {user:null};const u=session.user;const email=u.email.toLowerCase();
-  const [{data:ms,error:e1},{data:st}]=await Promise.all([sb.from('memberships').select('role,name,workspaces(id,slug,name,plan)').eq('email',email),sb.from('staff').select('email,name').eq('email',email).maybeSingle()]);
+  const [{data:ms,error:e1},{data:st}]=await Promise.all([sb.from('memberships').select('role,name,workspaces(id,slug,name,plan,settings)').eq('email',email),sb.from('staff').select('email,name').eq('email',email).maybeSingle()]);
   if(e1){console.error(e1);}
   isStaff=!!st;
   let list=(ms||[]).filter(x=>x.workspaces).map(x=>({...x.workspaces,role:x.role,memberName:x.name}));
-  if(isStaff){const {data:all}=await sb.from('workspaces').select('id,slug,name,plan').order('name');list=(all||[]).map(w=>{const mine=list.find(x=>x.id===w.id);return {...w,role:mine?mine.role:'staff'};});}
+  if(isStaff){const {data:all}=await sb.from('workspaces').select('id,slug,name,plan,settings').order('name');list=(all||[]).map(w=>{const mine=list.find(x=>x.id===w.id);return {...w,role:mine?mine.role:'staff'};});}
   if(!list.length){await sb.auth.signOut();return {user:null,err:'This account has not been invited to Brand Studio. Ask '+S.approverName+' for an invite.'};}
   workspaces=list;const want=localStorage.getItem(LS_WS);workspace=list.find(w=>w.slug===want)||list[0];
   const name=(st&&st.name)||(workspace.memberName)||u.user_metadata&&u.user_metadata.full_name||email.split('@')[0];
@@ -95,6 +95,11 @@ if(!cloud){
  S.signInGoogle=async()=>{const {error}=await sb.auth.signInWithOAuth({provider:'google',options:{redirectTo:location.origin+location.pathname,queryParams:{prompt:'select_account'}}});if(error)throw error;};
  S.sendLink=async e=>{const {error}=await sb.auth.signInWithOtp({email:e.trim().toLowerCase(),options:{emailRedirectTo:location.origin+location.pathname}});if(error)throw error;};
  S.signOut=async()=>{stopLive();S.role=null;await sb.auth.signOut();};
+ S.guidelines={
+  async url(){const path=workspace&&workspace.settings&&workspace.settings.guidelines;if(!path)return null;const {data,error}=await sb.storage.from('guidelines').createSignedUrl(path,3600);if(error)throw error;return data.signedUrl;},
+  async upload(file){if(!workspace)throw new Error('No workspace');if(file.type!=='application/pdf')throw new Error('Upload a PDF.');const path=workspace.id+'/guidelines-'+Date.now()+'.pdf';const {error}=await sb.storage.from('guidelines').upload(path,file,{contentType:'application/pdf',upsert:false});if(error)throw error;
+   const settings={...(workspace.settings||{}),guidelines:path,guidelinesName:file.name,guidelinesAt:iso(),guidelinesBy:S.me.name};const {error:e2}=await sb.from('workspaces').update({settings}).eq('id',workspace.id);if(e2)throw e2;workspace={...workspace,settings};workspaces=workspaces.map(w=>w.id===workspace.id?workspace:w);emit('workspace',workspace);return path;}
+ };
  S.updateName=async name=>{name=name.trim();if(!name)return;const {error}=await sb.auth.updateUser({data:{full_name:name}});if(error)throw error;if(workspace){await sb.from('memberships').update({name}).eq('workspace_id',workspace.id).eq('email',S.me.email);}S.me={...S.me,name};track();};
  S.resetPassword=async()=>{const {error}=await sb.auth.resetPasswordForEmail(S.me.email,{redirectTo:location.origin+location.pathname});if(error)throw error;};
  S.setPassword=async pw=>{const {error}=await sb.auth.updateUser({password:pw});if(error)throw error;};
