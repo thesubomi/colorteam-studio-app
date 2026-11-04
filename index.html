@@ -312,6 +312,8 @@ kbd{font-family:inherit;font-size:10px;color:var(--text-3);border:1px solid var(
 </head>
 <body>
 <div id="root"></div>
+<div id="ct-staging" style="position:fixed;left:50%;bottom:10px;transform:translateX(-50%);z-index:9999;padding:4px 10px;border-radius:999px;background:#F2B0CD;color:#161616;font:600 11px/1.6 Inter,system-ui,sans-serif;letter-spacing:.08em;text-transform:uppercase;pointer-events:none">Staging</div>
+<script>if(!/staging|github\.io|localhost/.test(location.hostname))document.getElementById('ct-staging').remove();</script>
 <script type="module" src="./src.jsx"></script>
 </body>
 </html>
