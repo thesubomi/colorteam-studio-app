@@ -23,7 +23,7 @@ function legacyBundle(){
   };
 }
 export default defineConfig({
-  base: '/',
+  base: './',
   plugins: [react({ jsxRuntime: 'classic' }), legacyBundle()],
   build: { outDir: 'dist', assetsDir: '_app', sourcemap: false, chunkSizeWarningLimit: 1200 }
 });
