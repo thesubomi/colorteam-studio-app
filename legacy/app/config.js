@@ -90,3 +90,6 @@
   };
   window.ctWhenLabel=function(f){var d=window.ctWhen(f);if(!d)return '';return d.toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'})+', '+d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});};
 })();
+
+// What the AI needs to know about a template: its text fields and their samples.
+window.ctAiTpl=function(t){return {id:t.id,name:t.name,fields:(t.fields||[]).filter(function(f){return !f.type||f.type==='area';}).map(function(f){return {k:f.k,label:f.label,def:typeof f.def==='string'?f.def:''};})};};
