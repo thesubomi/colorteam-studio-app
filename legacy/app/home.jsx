@@ -14,6 +14,7 @@ const [q,setQ]=React.useState('');const [flt,setFlt]=React.useState('all');
 const shown=files.filter(f=>(flt==='all'||(flt==='mine'?f.owner===me.uid:f.status===flt))&&(!q||f.title.toLowerCase().includes(q.toLowerCase())));
 return <main className="home">
 <h1 className="home-t">{greet}, {first}</h1>
+<HmOnboarding files={files} go={go} newFile={newFile}/>
 {live.length>0&&<section className="hs"><h2>Live now</h2><div className="live">{live.map(p=><button key={p.uid} className="live-c" onClick={()=>onJoin(p.docId,p.uid)}><span className="live-av"><Avatar p={p} size={32}/><i className="dot"></i></span><span className="live-t"><b>{p.name}</b><span>Editing {p.docTitle}</span></span><span className="live-j">Join</span></button>)}</div></section>}
 {waiting.length>0&&<section className="hs"><h2>{appr?'Waiting for your approval':'Changes requested'}<span className="cnt">{waiting.length}</span></h2><div className="file-grid">{waiting.map(f=><HmCard key={f.id} f={f} presence={presence} go={go} del={del}/>)}</div></section>}
 <section className="hs"><h2>Start from a template</h2><div className="tpl-grid">{CT_TEMPLATES.map(t=>{const s=t.sizes[0],d=CT_SIZES[s];return <button key={t.id} className="tpl-c" onClick={()=>newFile(t.id)}><span className="tpl-th"><CtScaled W={d.W} H={d.H} bw={112} bh={112}><CtAsset tpl={t} size={s} fields={ctDefaults(t)} theme={t.defTheme||0} photo={t.photo?CT_SAMPLE_PHOTO:null}/></CtScaled></span><b>{t.name}</b><span>{t.sizes.length} size{t.sizes.length>1?'s':''}</span></button>;})}</div></section>
