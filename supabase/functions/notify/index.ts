@@ -89,6 +89,9 @@ Deno.serve(async (req) => {
   }
   to = [...new Set(to)];
   if (!to.length) return json({ ok: true, sent: 0 });
+  // Plain-ASCII subject: long subjects with dashes or curly quotes get mangled by the mailer's encoding.
+  subject = subject.replace(/[\u2013\u2014]/g, "-").replace(/[\u2018\u2019]/g, "'").replace(/[\u201C\u201D]/g, '"').replace(/[^\x20-\x7E]/g, "");
+  if (subject.length > 70) subject = subject.slice(0, 67).trimEnd() + "...";
 
   const client = new SMTPClient({
     connection: { hostname: Deno.env.get("SMTP_HOST") || "smtp.gmail.com", port: 465, tls: true, auth: { username: user, password: pass } },
