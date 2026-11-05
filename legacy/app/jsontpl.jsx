@@ -6,10 +6,14 @@ function ctHexRgba(hex,a){const h=String(hex||'#000').replace('#','');const n=pa
 function ctLum(hex){const h=String(hex||'#000').replace('#','');const n=parseInt(h.length===3?h.split('').map(c=>c+c).join(''):h,16);const r=(n>>16)&255,g=(n>>8)&255,b=n&255;return (0.299*r+0.587*g+0.114*b)/255;}
 
 // Theme objects from a brand kit: one per "ground"-like colour, so the Style picker offers Brand, Light, Accent.
-function ctThemesFromKit(kit,logos){const cols=(kit&&kit.colors)||[];const by=r=>(cols.find(c=>c.role===r)||{}).hex;
+// A client without a logo yet gets their name as a plain wordmark, so templates (and exports) never
+// show a broken image.
+function ctWordmark(name,color){const t=String(name||'').replace(/\s*\(demo\)\s*$/i,'').trim()||'Your brand';const esc=t.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));const w=Math.max(60,Math.round(t.length*25+8));
+ return 'data:image/svg+xml;charset=utf-8,'+encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="48" viewBox="0 0 ${w} 48"><text x="0" y="37" font-family="Helvetica Neue,Helvetica,Arial,sans-serif" font-weight="700" font-size="40" letter-spacing="-1" fill="${color}">${esc}</text></svg>`);}
+function ctThemesFromKit(kit,logos,wsName){const cols=(kit&&kit.colors)||[];const by=r=>(cols.find(c=>c.role===r)||{}).hex;
  const ground=by('ground')||'#111111',surface=by('surface')||'#FFFFFF',ink=by('ink')||'#111111',accent=by('accent')||'#F2B0CD',muted=by('muted'),accent2=by('accent 2');
  const mk=(id,name,bg,extra)=>{const dark=ctLum(bg)<0.5;const fg=dark?(ctLum(ink)<0.5?surface:ink):(ctLum(ink)<0.5?ink:ground);const acc=(id==='accent'?(dark?surface:ground):accent);
-  return {id,name,bg,ink:fg,sub:muted&&Math.abs(ctLum(muted)-ctLum(bg))>0.25?muted:ctHexRgba(fg,.72),lab:acc,acc,hl:'color',mark:ctHexRgba(acc,.55),cardSoft:dark?ctHexRgba(fg,.08):ctHexRgba(ground,.06),glass:ctHexRgba(bg,.8),nameC:acc,line:ctHexRgba(fg,.5),hair:ctHexRgba(fg,.16),logo:(dark?logos.dark:logos.light)||logos.light||logos.dark||'',pod:'',chipBg:acc,chipInk:id==='accent'?accent:bg,cardAcc:accent,cardChip:accent,outline:acc,statBg:acc,statInk:bg,kit:true,...extra};};
+  return {id,name,bg,ink:fg,sub:muted&&Math.abs(ctLum(muted)-ctLum(bg))>0.25?muted:ctHexRgba(fg,.72),lab:acc,acc,hl:'color',mark:ctHexRgba(acc,.55),cardSoft:dark?ctHexRgba(fg,.08):ctHexRgba(ground,.06),glass:ctHexRgba(bg,.8),nameC:acc,line:ctHexRgba(fg,.5),hair:ctHexRgba(fg,.16),logo:(dark?logos.dark:logos.light)||logos.light||logos.dark||ctWordmark(wsName,fg),web:(kit&&kit.website||'').replace(/^https?:\/\//,'').replace(/\/$/,''),fontD:kit&&kit.fonts&&kit.fonts.display?ctFontFor('display',kit):'',fontB:kit&&kit.fonts&&kit.fonts.body?ctFontFor('body',kit):'',pod:'',chipBg:acc,chipInk:id==='accent'?accent:bg,cardAcc:accent,cardChip:accent,outline:acc,statBg:acc,statInk:bg,kit:true,...extra};};
  const list=[mk('brand','Brand',ground),mk('light','Light',surface),mk('accent','Accent',accent)];
  if(accent2)list.push(mk('accent2','Accent 2',accent2));
  return list;}
@@ -21,7 +25,7 @@ function ctLoadFonts(kit){const fam=[...new Set([kit&&kit.fonts&&kit.fonts.displ
  ctFontLink=document.createElement('link');ctFontLink.rel='stylesheet';ctFontLink.href='https://fonts.googleapis.com/css2?'+fam.map(f=>'family='+encodeURIComponent(f).replace(/%20/g,'+')+':wght@400;500;600;700;800').join('&')+'&display=swap';document.head.appendChild(ctFontLink);}
 
 // Swap the editor's themes when the workspace changes: Colorteam keeps its code themes, clients get kit themes.
-function ctApplyWorkspaceThemes(ws){const kit=ws&&ws.settings&&ws.settings.kit;const next=(ws&&ws.slug!=='colorteam'&&kit)?ctThemesFromKit(kit,(ws.kitLogos||{})):CT_CODE_THEMES;
+function ctApplyWorkspaceThemes(ws){const kit=ws&&ws.settings&&ws.settings.kit;const next=(ws&&ws.slug!=='colorteam'&&kit)?ctThemesFromKit(kit,(ws.kitLogos||{}),ws.name):CT_CODE_THEMES;
  CT_THEMES.length=0;next.forEach(t=>CT_THEMES.push(t));ctLoadFonts(ws&&ws.slug!=='colorteam'?kit:null);}
 if(window.CTS&&CTS.subscribeWorkspace)CTS.subscribeWorkspace(ctApplyWorkspaceThemes);
 
