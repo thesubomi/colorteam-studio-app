@@ -14,10 +14,19 @@ return <div className="pres">{others.map(p=>{const here=!!p.docId&&p.docId===cur
 function FileThumb({file,bw,bh}){const tpl=CT_TEMPLATES.find(t=>t.id===file.tplId)||CT_TEMPLATES[0];const s=file.sizes[0]||tpl.sizes[0];const d=CT_SIZES[s];return <CtScaled W={d.W} H={d.H} bw={bw} bh={bh}><CtAsset tpl={tpl} size={s} fields={file.fields} theme={file.theme} photo={ctPhotoFor(file,tpl)} page={0} offsets={(file.offsets||{})[s]}/></CtScaled>;}
 function cvFrames(file,tpl){const out=[];let y=0;for(const s of file.sizes){const d=CT_SIZES[s];const n=ctPageCount(tpl,s,file.fields);let x=0;for(let i=0;i<n;i++){out.push({key:s+':'+i,size:s,page:i,n,x,y,W:d.W,H:d.H});x+=d.W+CV_GAP;}y+=d.H+CV_ROW;}return out;}
 
+// Where each platform covers or crops the post. Shown on the canvas only; exports never include it.
+const CV_SAFE={
+ story:[{x:0,y:0,w:1080,h:250,l:'Profile and progress bar'},{x:0,y:1580,w:1080,h:340,l:'Reply and caption area'}],
+ post:[{x:0,y:0,w:34,h:1350,l:''},{x:1046,y:0,w:34,h:1350,l:''}],
+ yt:[{x:1060,y:640,w:200,h:64,l:'Timestamp'}],
+ wide:[{x:0,y:0,w:1600,h:90,l:'Keep text out of the top and bottom 10%'},{x:0,y:810,w:1600,h:90,l:''}]
+};
+function cvSafeOn(){try{return localStorage.getItem('ctbs2_safe')==='1';}catch(e){return false;}}
 function Canvas({file,tpl,sel,setSel,onOffset,cursors,people,onPointerWorld,follow,onStopFollow,commenting,onPlace,overlay,focus}){
 const cmRef=React.useRef(commenting);cmRef.current=commenting;
 const ref=React.useRef(null),worldRef=React.useRef(null);
 const [v,setV]=React.useState({x:40,y:40,z:0.2});const vRef=React.useRef(v);vRef.current=v;
+const [safe,setSafe]=React.useState(cvSafeOn);const toggleSafe=()=>setSafe(v=>{try{localStorage.setItem('ctbs2_safe',v?'0':'1');}catch(e){}return !v;});
 const [guides,setGuides]=React.useState(null);const [rects,setRects]=React.useState({});
 const fileRef=React.useRef(file);fileRef.current=file;
 const frames=cvFrames(file,tpl);const photo=ctPhotoFor(file,tpl);
@@ -47,11 +56,12 @@ return <div className={'cv'+(follow?' following':'')+(commenting?' commenting':'
 <CtAsset tpl={tpl} size={f.size} fields={file.fields} theme={file.theme} photo={photo} page={f.page} offsets={(file.offsets||{})[f.size]} live onLayerDown={layerDown(f)}/>
 {sel&&sel.fk===f.key&&sel.frame&&<div className="cv-fsel" style={{borderWidth:2/z}}></div>}
 {Object.entries(rects).filter(([,r])=>r.fk===f.key).map(([k,r])=>{const mine=k==='me';const p=mine?null:(people[k]||{});const c=mine?'var(--sel)':(p.color||'#888');return <div key={k} className="cv-sel" style={{left:r.x,top:r.y,width:r.w,height:r.h,borderColor:c,borderWidth:(mine?1.5:2)/z}}>{mine&&sel.locked&&<span className="cv-tag" style={{fontSize:11/z,background:'var(--text-2)'}}>Background · locked</span>}{!mine&&<span className="cv-tag" style={{fontSize:11/z,background:c}}>{(p.name||'').split(' ')[0]}</span>}{mine&&!sel.locked&&[0,1,2,3].map(i=><i key={i} className={'cv-h h'+i} style={{width:8/z,height:8/z,borderWidth:1.5/z}}></i>)}</div>;})}
+{safe&&(CV_SAFE[f.size]||[]).map((r,i)=><div key={'sz'+i} className="cv-safe" style={{left:r.x,top:r.y,width:r.w,height:r.h,fontSize:Math.min(r.h*.42,Math.max(22,11/z))}} title={r.l||'Cropped to 3:4 in the profile grid'}>{r.l}</div>)}
 {overlay&&overlay(f,z)}
 {guides&&guides.fk===f.key&&guides.gs.map((g,i)=><div key={i} className={'cv-guide '+g.o} style={g.o==='v'?{left:g.p,width:1/z}:{top:g.p,height:1/z}}></div>)}
 </div>)}
 {Object.entries(cursors||{}).map(([uid,c])=>{const p=people[uid]||{};return <div key={uid} className="cv-cur" style={{left:c.x,top:c.y,transform:`scale(${1/z})`,'--c':p.color||'#888'}}><svg width="18" height="20" viewBox="0 0 18 20"><path d="M1.5 1.5l14 6.6-6 1.9-2.6 6.5z" fill="var(--c)" stroke="#fff" strokeWidth="1.5" strokeLinejoin="round"/></svg><span>{(p.name||'Teammate').split(' ')[0]}</span></div>;})}
 </div>
-<div className="cv-zoom" onPointerDown={e=>e.stopPropagation()}><button onClick={()=>zoomBy(1/1.25)} title="Zoom out">−</button><span>{Math.round(z*100)}%</span><button onClick={()=>zoomBy(1.25)} title="Zoom in">+</button><button onClick={fit}>Fit</button></div>
+<div className="cv-zoom" onPointerDown={e=>e.stopPropagation()}><button onClick={()=>zoomBy(1/1.25)} title="Zoom out">−</button><span>{Math.round(z*100)}%</span><button onClick={()=>zoomBy(1.25)} title="Zoom in">+</button><button onClick={fit}>Fit</button><button className={safe?'on':''} onClick={toggleSafe} title="Show where platforms cover or crop the post">Safe zones</button></div>
 </div>;}
 Object.assign(window,{UiIcon,ctPhotoFor,fmtRel,Avatar,StatusPill,ThemeToggle,useDismiss,Presence,FileThumb,cvFrames,Canvas});
