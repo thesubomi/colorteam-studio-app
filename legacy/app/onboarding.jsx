@@ -12,7 +12,7 @@ const steps=[
  {k:'first',done:hasFile,title:hasFile?'First file made':'Make the first post',body:'Pick a template, change the words, send it for approval, export at the right size.',actions:[['Start from a template','templates']]},
 ];
 const done=steps.filter(s=>s.done).length;
-if(hidden||done===3)return null;
+if(hidden||(done===3&&(st.brand_stage||!owner)))return null;
 const act=key=>{if(key==='templates'){const el=document.querySelector('.tpl-grid');if(el)el.scrollIntoView({behavior:'smooth',block:'start'});return;}go({name:key});};
 return <section className="hs onb"><div className="onb-h"><div><h2>Getting {ws.name} ready</h2><p className="muted">{done} of 3 done{owner?'':' · owners complete these'}</p></div><button className="btn xs ghost" onClick={()=>{try{localStorage.setItem('ctbs2_onb_'+ws.id,'1');}catch(e){}setHidden(true);}}>Hide</button></div>
 {owner&&!st.brand_stage&&<OnbStage/>}<div className="onb-grid">{steps.map((s,i)=><div key={s.k} className={'onb-c'+(s.done?' done':'')}><span className="onb-n">{s.done?'✓':i+1}</span><b>{s.title}</b><p className="muted">{s.body}</p>{owner&&!s.done&&<div className="row">{s.actions.map(([l,k])=><button key={k} className={'btn xs'+(k===s.actions[0][1]?' primary':'')} onClick={()=>act(k)}>{l}</button>)}</div>}</div>)}</div></section>;}
