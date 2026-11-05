@@ -13,7 +13,7 @@ React.useEffect(()=>{if(!user)return;const a=CTS.subscribeFiles(setFiles),b=CTS.
 const [follow,setFollow]=React.useState(null);const [team,setTeam]=React.useState([]);const [cmReq,setCmReq]=React.useState(null);
 React.useEffect(()=>{if(!user)return;CTS.team().then(t=>{const me=CTS.me;const list=(t||[]).slice();if(me&&!list.some(m=>m.email===me.email))list.push({email:me.email,name:me.name,role:CTS.role});setTeam(list);}).catch(()=>{});},[user&&user.uid]);
 const openComment=(fid,cid)=>{setCmReq({cid,n:Date.now()});go({name:'file',id:fid});};
-const [msg,setMsg]=React.useState('');const tm=React.useRef();const toast=m=>{setMsg(m);clearTimeout(tm.current);tm.current=setTimeout(()=>setMsg(''),2400);};
+const [msg,setMsg]=React.useState('');React.useEffect(()=>{window.__ctToast=toast;});const tm=React.useRef();const toast=m=>{window.__ctToast=toast;setMsg(m);clearTimeout(tm.current);tm.current=setTimeout(()=>setMsg(''),2400);};
 const join=(docId,uid)=>{setFollow(uid||null);go({name:'file',id:docId});};
 const newFile=async tplId=>{const t=CT_TEMPLATES.find(x=>x.id===tplId);const fields=ctDefaults(t);try{const id=await CTS.createFile({tplId,title:CTS.autoTitle(t,fields),fields,photo:null,sizes:t.sizes.slice(),theme:t.defTheme||0,offsets:{},schedule:null,versions:[]});go({name:'file',id});}catch(e){console.error(e);toast('Couldn’t create the file');}};
 const save=(id,patch)=>CTS.saveFile(id,{...patch,updatedAt:new Date().toISOString(),updatedBy:CTS.me.name}).catch(()=>toast('Couldn’t save'));

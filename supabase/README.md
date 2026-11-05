@@ -16,5 +16,6 @@ Auth: email sign-in links (and password), Google sign-in available. Redirect URL
 | 0003_guidelines_storage.sql | not yet | 2026-11-04 |
 | 0004_brand_kit_assets.sql | not yet | 2026-11-04 |
 | 0005_templates.sql | not yet | 2026-11-05 |
+| 0006_template_requests.sql | not yet | 2026-11-05 |
 
 Workspace model (0002): `workspaces` (one per client, slug + plan), `memberships` (email + role owner/approver/editor per workspace), `invites`, `staff` (Colorteam people who can enter every workspace). `requests` and `library` carry `workspace_id`. `members` is now a view of the caller's default workspace so the current app keeps working until the switcher ships. Helpers: `is_staff()`, `member_role(ws)`, `is_member(ws)`, `can_approve(ws)`, `default_workspace()`.
