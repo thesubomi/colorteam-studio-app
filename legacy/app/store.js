@@ -85,6 +85,7 @@ async function ctAuthLock(name,acquireTimeout,fn){
  // mail scanners that open links don't burn the single-use token. Supabase errors arrive in the hash.
  (function(){try{const q=new URLSearchParams(location.search);const th=q.get('token_hash'),ty=q.get('type');
   if(th&&ty)S.pendingLink={token_hash:th,type:ty};
+  if(q.has('welcome')){S.welcome=true;history.replaceState(null,'',location.pathname+location.hash);}
   const h=new URLSearchParams(location.hash.replace(/^#/,''));const ed=h.get('error_description')||h.get('error');
   if(ed){S.linkError=/expired|invalid/i.test(ed)?'That sign-in link has expired or was already used. Enter your email and we\'ll send a fresh one.':ed;history.replaceState(null,'',location.pathname+location.search);}
  }catch(e){}})();
