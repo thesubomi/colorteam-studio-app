@@ -17,7 +17,12 @@ Auth: email sign-in links (and password), Google sign-in available. Redirect URL
 | 0004_brand_kit_assets.sql | not yet | 2026-11-04 |
 | 0005_templates.sql | not yet | 2026-11-05 |
 | 0006_template_requests.sql | not yet | 2026-11-05 |
-| 0007_protect_plan.sql | not yet | 2026-11-05 |
+| 0007_protect_plan.sql | not yet | 2026-11-05 (trigger re-attached by 0008) |
+| 0008_plan_limits.sql | not yet | 2026-11-05 |
+
+Apply a migration on its own, then run `tests/rls_workspaces.sql` as a separate run: the test ends in `rollback`, and the SQL editor runs everything pasted in one transaction, so a migration pasted together with the test is undone with it.
+
+Plan limits (0008): `plan_limit(ws, key)` gives seats / templates / requests / channels for the workspace's plan, with per-workspace extras in `settings.limits` (staff only). Seats are enforced on `memberships` inserts (staff never use one), template requests per calendar month on `template_requests`. Owners cannot edit `settings.limits` or `settings.billing`.
 
 Workspace model (0002): `workspaces` (one per client, slug + plan), `memberships` (email + role owner/approver/editor per workspace), `invites`, `staff` (Colorteam people who can enter every workspace). `requests` and `library` carry `workspace_id`. `members` is now a view of the caller's default workspace so the current app keeps working until the switcher ships. Helpers: `is_staff()`, `member_role(ws)`, `is_member(ws)`, `can_approve(ws)`, `default_workspace()`.
 

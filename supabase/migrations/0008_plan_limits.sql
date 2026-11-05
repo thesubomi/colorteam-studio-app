@@ -81,3 +81,7 @@ begin
   end if;
   return new;
 end $$;
+-- (Re)attach the guard. On staging the 0007 trigger was lost when it was applied in the same run as a
+-- rolled-back test, so this migration makes sure it exists.
+drop trigger if exists workspaces_guard on public.workspaces;
+create trigger workspaces_guard before update on public.workspaces for each row execute function public.guard_workspace();
