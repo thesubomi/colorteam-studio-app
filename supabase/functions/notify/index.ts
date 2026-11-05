@@ -34,13 +34,15 @@ Deno.serve(async (req) => {
   if (!user || !pass) return json({ skipped: "SMTP not configured" });
 
   const url = Deno.env.get("SUPABASE_URL")!;
-  const caller = createClient(url, Deno.env.get("SUPABASE_ANON_KEY")!, { global: { headers: { Authorization: req.headers.get("Authorization") ?? "" } } });
-  const { data: me } = await caller.auth.getUser();
-  const actor = me?.user?.email?.toLowerCase();
-  if (!actor) return json({ error: "Sign in first" }, 401);
-
-  let body: { file_id?: string; event?: string };
+  let body: { file_id?: string; event?: string; actor?: string };
   try { body = await req.json(); } catch { return json({ error: "Bad JSON" }, 400); }
+  // Server-to-server calls (the mcp function, on behalf of a key's owner) carry the service key.
+  const internal = (req.headers.get("Authorization") ?? "") === "Bearer " + Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  const caller = createClient(url, Deno.env.get("SUPABASE_ANON_KEY")!, { global: { headers: { Authorization: req.headers.get("Authorization") ?? "" } } });
+  let actor = "";
+  if (internal) actor = String(body.actor ?? "").toLowerCase();
+  else { const { data: me } = await caller.auth.getUser(); actor = me?.user?.email?.toLowerCase() ?? ""; }
+  if (!actor) return json({ error: "Sign in first" }, 401);
   const want = { sent: "pending", approved: "approved", changes: "changes" }[body.event ?? ""];
   if (!body.file_id || !want) return json({ error: "file_id and event (sent, approved, changes) are required" }, 400);
 
@@ -57,13 +59,15 @@ Deno.serve(async (req) => {
   if (file.status !== want) return json({ skipped: "status is " + file.status });
 
   // Caller must belong to the file's workspace (or be staff).
-  const { data: role } = await caller.rpc("member_role", { ws: file.workspace_id });
-  const { data: staff } = await caller.rpc("is_staff");
-  if (!role && !staff) return json({ error: "Not in this workspace" }, 403);
+  if (!internal) {
+    const { data: role } = await caller.rpc("member_role", { ws: file.workspace_id });
+    const { data: staff } = await caller.rpc("is_staff");
+    if (!role && !staff) return json({ error: "Not in this workspace" }, 403);
+  }
 
   const { data: ws } = await admin.from("workspaces").select("name").eq("id", file.workspace_id).single();
   const { data: members } = await admin.from("memberships").select("email,name,role").eq("workspace_id", file.workspace_id);
-  const actorName = (members ?? []).find((m) => m.email === actor)?.name || actor.split("@")[0];
+  const actorName = ((members ?? []).find((m) => m.email === actor)?.name || actor.split("@")[0]) + (internal ? " (via an AI agent)" : "");
   const title = file.data?.title || "Untitled post";
   const app = (Deno.env.get("APP_URL") || "https://app-staging.colorteam.io/") + "#/file/" + file.id;
   const wsName = ws?.name || "your workspace";

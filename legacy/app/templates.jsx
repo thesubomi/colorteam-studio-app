@@ -229,4 +229,4 @@ const ctClientBrand=()=>{const w=window.CTS&&CTS.workspace;if(!w||w.slug==='colo
 const ctDefaults=tpl=>{const base=Object.fromEntries(tpl.fields.map(x=>[x.k,x.def]));const b=!tpl.db&&ctClientBrand();const o=b&&CT_CLIENT_DEFAULTS[tpl.id];if(!o)return base;
  const fill=v=>String(v).replace(/\{brand\}/g,b.name).replace(/\{web\}/g,b.web);for(const k in o)if(k in base)base[k]=fill(o[k]);return base;};
 const CT_SAMPLE_PHOTO={src:'assets/imagery/portrait-cutout-woman-desaturated.webp',cutout:true,sample:true};
-Object.assign(window,{ctAllSizes,ctNativeFor,CT_CORE_SIZES,CT_INTERNAL_TEMPLATES,CT_THEMES,CT_SIZES,CT_TEMPLATES,CtAsset,CtScaled,ctPageCount,ctDefaults,CT_SAMPLE_PHOTO,ctRich,T6Bg,T6Spark});
+Object.assign(window,{CT_CLIENT_DEFAULTS,ctAllSizes,ctNativeFor,CT_CORE_SIZES,CT_INTERNAL_TEMPLATES,CT_THEMES,CT_SIZES,CT_TEMPLATES,CtAsset,CtScaled,ctPageCount,ctDefaults,CT_SAMPLE_PHOTO,ctRich,T6Bg,T6Spark});

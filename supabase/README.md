@@ -21,6 +21,7 @@ Auth: email sign-in links (and password), Google sign-in available. Redirect URL
 | 0008_plan_limits.sql | not yet | 2026-11-05 |
 | 0009_deliverables.sql | not yet | 2026-11-05 |
 | 0010_app_errors.sql | not yet | 2026-11-05 |
+| 0011_api_keys.sql | not yet | 2026-11-05 |
 
 Apply a migration on its own, then run `tests/rls_workspaces.sql` as a separate run: the test ends in `rollback`, and the SQL editor runs everything pasted in one transaction, so a migration pasted together with the test is undone with it.
 
@@ -35,3 +36,5 @@ Workspace model (0002): `workspaces` (one per client, slug + plan), `memberships
 Deliverables (0009): `tasks` (staff only). Template requests create a task due after the plan's turnaround (Core 5 working days, Growth 3, Max 2) and close it when the request is done or declined. Brand Foundation creates four stage tasks (5/15/25/30 working days from payment) whose status follows the stage. Staff add manual tasks and set due dates and assignees on the Deliverables page.
 
 Error log (0010): `app_errors`, written only through `log_app_error()` (trimmed fields, 30 a minute per person, 60 days kept), read by staff on the Workspaces page. The app reports uncaught errors, failed promises, screen crashes and failed exports, tagged with the deployed commit. Uptime: `.github/workflows/uptime.yml` checks the app, auth, database and functions every 30 minutes; a failed run emails the repo owner.
+
+Agent access (0011): `api_keys` (owners and staff can list; only a SHA-256 hash is stored). `create_api_key(ws, name)` returns the key once and only for owners/staff of workspaces with agent access (`has_agent_access`: Max, internal, or `settings.limits.mcp = true`); `revoke_api_key(id)`. The `mcp` edge function serves agents.

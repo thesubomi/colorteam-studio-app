@@ -1,0 +1,27 @@
+// Agent access (MCP): owners of Max workspaces create keys so Claude or other agents can make posts.
+const AG_URL=()=>((window.CT_STUDIO_CONFIG&&CT_STUDIO_CONFIG.supabase&&CT_STUDIO_CONFIG.supabase.url)||'')+'/functions/v1/mcp';
+function AgCopy({text,label}){const [ok,setOk]=React.useState(false);return <button className="btn xs" onClick={()=>{try{navigator.clipboard.writeText(text);setOk(true);setTimeout(()=>setOk(false),1500);}catch(e){}}}>{ok?'Copied':label||'Copy'}</button>;}
+function AgCode({text}){return <div className="ag-code"><code>{text}</code><AgCopy text={text}/></div>;}
+function HmAgents({toast,go}){const ws=CTS.workspace;const L=ctLimits(ws);const canManage=CTS.isStaff||(ws&&ws.role==='owner');
+ const [rows,setRows]=React.useState(null);const [name,setName]=React.useState('');const [fresh,setFresh]=React.useState(null);const [busy,setBusy]=React.useState(false);
+ const load=()=>ws&&CTS.agents.list(ws.id).then(setRows).catch(e=>{setRows([]);toast(e.message);});
+ React.useEffect(()=>{setFresh(null);if(L.mcp&&canManage)load();},[ws&&ws.id]);
+ if(!ws)return null;
+ if(!canManage)return <main className="adm"><div className="adm-h"><h1>Agent access</h1><p className="muted">Ask the workspace owner to set this up.</p></div></main>;
+ if(!L.mcp)return <main className="adm"><div className="adm-h"><h1>Agent access</h1><p className="muted">{ws.name}</p></div><section className="adm-card" style={{maxWidth:640}}><h2>Make posts from Claude and other AI agents</h2><p className="muted" style={{margin:'8px 0 14px'}}>With agent access, an AI assistant can read your brand kit, pick a template, write the post and send it to your approvers, straight into this Studio. Nothing goes out without a person approving it.</p><p>Agent access is part of the <b>Max</b> plan.</p><div className="row" style={{marginTop:12}}><a className="btn primary" href="https://studio-staging.colorteam.io/contact/" target="_blank" rel="noopener">Talk to Colorteam about Max</a><button className="btn ghost" onClick={()=>go&&go({name:'billing'})}>See your plan</button></div></section></main>;
+ const create=async e=>{e.preventDefault();setBusy(true);try{const key=await CTS.agents.create(ws.id,name.trim()||'Claude');setFresh({key,name:name.trim()||'Claude'});setName('');load();}catch(x){toast(x.message);}setBusy(false);};
+ const revoke=async r=>{if(!confirm('Revoke “'+r.name+'”? Agents using it stop working straight away.'))return;try{await CTS.agents.revoke(r.id);load();toast('Key revoked');}catch(x){toast(x.message);}};
+ const url=AG_URL();const day=t=>t?String(t).slice(0,10):'never';
+ return <main className="adm"><div className="adm-h"><h1>Agent access</h1><p className="muted">Let Claude or another AI agent work in {ws.name}: read the brand kit, make posts from your templates, set publish dates and send them for approval. Agents can't approve or publish; a person always signs off.</p></div>
+ {fresh&&<section className="adm-card adm-wide ag-fresh"><h2>Your new key: copy it now</h2><p className="muted" style={{marginBottom:8}}>This is the only time it's shown. Treat it like a password: anyone with it can make drafts in this workspace.</p><AgCode text={fresh.key}/>
+  <h2 style={{marginTop:18}}>Connect it</h2>
+  <p className="ag-step"><b>Claude Code</b> (terminal)</p><AgCode text={`claude mcp add --transport http colorteam-studio ${url} --header "Authorization: Bearer ${fresh.key}"`}/>
+  <p className="ag-step"><b>Claude desktop or claude.ai</b>: Settings → Connectors → Add custom connector, name it “Colorteam Studio” and paste this URL (it contains the key, so keep it private):</p><AgCode text={`${url}?key=${fresh.key}`}/>
+  <p className="ag-step"><b>Other agents</b>: MCP server over HTTP at the address below, with the header <span className="mono">Authorization: Bearer {fresh.key.slice(0,10)}…</span></p><AgCode text={url}/>
+  <p className="muted" style={{marginTop:12}}>Then try: “Read my Colorteam Studio brand kit and make a quote post for Tuesday about our new roast, then send it for approval.”</p>
+  <button className="btn" style={{marginTop:10}} onClick={()=>setFresh(null)}>I've saved it</button></section>}
+ <section className="adm-card adm-wide" style={{marginTop:14}}><h2>Keys</h2>
+  {!rows?<p className="muted">Loading…</p>:<table className="adm-t"><thead><tr><th>Name</th><th>Key</th><th>Made by</th><th>Created</th><th>Last used</th><th></th></tr></thead><tbody>{rows.map(r=><tr key={r.id} className={r.revoked_at?'dl-done':''}><td><b>{r.name}</b></td><td className="mono">{r.prefix}…</td><td className="mono" style={{fontSize:11}}>{r.created_by}</td><td className="muted">{day(r.created_at)}</td><td className="muted">{r.revoked_at?'revoked '+day(r.revoked_at):day(r.last_used_at)}</td><td>{!r.revoked_at&&<button className="btn xs ghost" onClick={()=>revoke(r)}>Revoke</button>}</td></tr>)}{!rows.length&&<tr><td colSpan={6} className="muted">No keys yet.</td></tr>}</tbody></table>}
+  <form className="row adm-add" onSubmit={create} style={{marginTop:12}}><input className="f-in" placeholder="Name, e.g. Claude (Nora's laptop)" value={name} onChange={e=>setName(e.target.value)} maxLength={60}/><button className="btn primary" disabled={busy}>{busy?'Creating…':'Create key'}</button></form>
+  <p className="muted" style={{marginTop:8,fontSize:12}}>Posts an agent makes are filed under the person who created the key and marked as made by an agent.</p></section></main>;}
+Object.assign(window,{HmAgents});

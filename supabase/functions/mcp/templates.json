@@ -1,0 +1,654 @@
+{
+ "templates": [
+  {
+   "id": "podcast",
+   "name": "Podcast guest announcement",
+   "internal": false,
+   "photo": true,
+   "defTheme": 3,
+   "sizes": [
+    "post",
+    "story",
+    "square",
+    "wide"
+   ],
+   "designedSizes": [
+    "post",
+    "story"
+   ],
+   "fields": [
+    {
+     "k": "episode",
+     "label": "Episode number",
+     "def": "06"
+    },
+    {
+     "k": "guest",
+     "label": "Guest name",
+     "def": "Heather Winkle"
+    },
+    {
+     "k": "role",
+     "label": "Guest role",
+     "def": "VP of Digital Experience, Delta Air Lines"
+    },
+    {
+     "k": "label",
+     "label": "Label",
+     "def": "New episode"
+    }
+   ],
+   "clientDefaults": {
+    "episode": "01",
+    "guest": "Guest Name",
+    "role": "Title, Company",
+    "label": "New episode"
+   }
+  },
+  {
+   "id": "quote",
+   "name": "Quote card",
+   "internal": false,
+   "photo": true,
+   "defTheme": 0,
+   "sizes": [
+    "post",
+    "square",
+    "story",
+    "wide"
+   ],
+   "designedSizes": [
+    "post",
+    "square"
+   ],
+   "fields": [
+    {
+     "k": "quote",
+     "label": "Quote",
+     "multiline": true,
+     "def": "Brand trust compounds. *Show up* every week, even when nobody is clapping."
+    },
+    {
+     "k": "name",
+     "label": "Name",
+     "def": "Subomi Archibong"
+    },
+    {
+     "k": "role",
+     "label": "Role",
+     "def": "Founder & CEO, Colorteam"
+    }
+   ],
+   "clientDefaults": {
+    "quote": "Say the one thing your customers *remember*.",
+    "name": "Your Name",
+    "role": "Founder, {brand}"
+   }
+  },
+  {
+   "id": "carousel",
+   "name": "Carousel",
+   "internal": false,
+   "photo": false,
+   "defTheme": 0,
+   "sizes": [
+    "post",
+    "square",
+    "story",
+    "wide"
+   ],
+   "designedSizes": [
+    "post",
+    "square"
+   ],
+   "fields": [
+    {
+     "k": "kicker",
+     "label": "Series label",
+     "def": "Marketing tips"
+    },
+    {
+     "k": "title",
+     "label": "Cover title",
+     "def": "*Systems* Over Speed"
+    },
+    {
+     "k": "points",
+     "label": "Slides (one per line, \"Title — detail\")",
+     "multiline": true,
+     "def": "Plan the month — Set three priorities and cut the rest.\nBatch the work — Write, design and schedule in one block.\nReview weekly — Keep what moved the needle."
+    },
+    {
+     "k": "cta",
+     "label": "Closing slide",
+     "def": "Follow @yourcolorteam for more"
+    }
+   ],
+   "clientDefaults": {
+    "kicker": "Tips from {brand}",
+    "title": "Three things we *always* do",
+    "points": "Start with why - One line on why it matters.\nKeep it simple - Short, useful, easy to act on.\nSay what is next - End with one clear step.",
+    "cta": "Follow {brand} for more"
+   }
+  },
+  {
+   "id": "reel",
+   "name": "Reel cover",
+   "internal": false,
+   "photo": true,
+   "defTheme": 3,
+   "sizes": [
+    "story",
+    "post",
+    "square",
+    "wide"
+   ],
+   "designedSizes": [
+    "story"
+   ],
+   "fields": [
+    {
+     "k": "series",
+     "label": "Label",
+     "def": "Clara Armand-Delille · Founder, ThirdEye Media"
+    },
+    {
+     "k": "title",
+     "label": "Title",
+     "def": "Marketing Isn’t the Only Thing That *Builds Trust*"
+    }
+   ],
+   "clientDefaults": {
+    "series": "{brand} · Episode 1",
+    "title": "The one thing we *never* skip"
+   }
+  },
+  {
+   "id": "story",
+   "name": "Story",
+   "internal": false,
+   "photo": true,
+   "defTheme": 0,
+   "sizes": [
+    "story",
+    "post",
+    "square",
+    "wide"
+   ],
+   "designedSizes": [
+    "story"
+   ],
+   "fields": [
+    {
+     "k": "headline",
+     "label": "Headline",
+     "def": "New Work: *NECLive* 2025"
+    },
+    {
+     "k": "body",
+     "label": "Body",
+     "multiline": true,
+     "def": "A scalable visual identity for the creative economy, from avatar to stage."
+    },
+    {
+     "k": "cta",
+     "label": "Call to action",
+     "def": "See the case study"
+    }
+   ],
+   "clientDefaults": {
+    "headline": "New at {brand}: *something fresh*",
+    "body": "One or two lines about what is new and why people will care.",
+    "cta": "Find out more"
+   }
+  },
+  {
+   "id": "team",
+   "name": "Team spotlight",
+   "internal": false,
+   "photo": true,
+   "defTheme": 1,
+   "sizes": [
+    "post",
+    "square",
+    "story",
+    "wide"
+   ],
+   "designedSizes": [
+    "post"
+   ],
+   "fields": [
+    {
+     "k": "headline",
+     "label": "Label",
+     "def": "Meet the team"
+    },
+    {
+     "k": "name",
+     "label": "Name",
+     "def": "Funmibi Samuel"
+    },
+    {
+     "k": "role",
+     "label": "Role",
+     "def": "Marketing Lead, Colorteam"
+    }
+   ],
+   "clientDefaults": {
+    "headline": "Meet the team",
+    "name": "Team Member",
+    "role": "Role, {brand}"
+   }
+  },
+  {
+   "id": "youtube",
+   "name": "YouTube thumbnail",
+   "internal": false,
+   "photo": true,
+   "defTheme": 3,
+   "sizes": [
+    "yt",
+    "post",
+    "square",
+    "story",
+    "wide"
+   ],
+   "designedSizes": [
+    "yt"
+   ],
+   "fields": [
+    {
+     "k": "label",
+     "label": "Label",
+     "def": "Episode 05"
+    },
+    {
+     "k": "title",
+     "label": "Title",
+     "def": "The Shortcut That Kills *Startups*"
+    }
+   ],
+   "clientDefaults": {
+    "label": "Episode 01",
+    "title": "The *mistake* everyone makes"
+   }
+  },
+  {
+   "id": "linkedin",
+   "name": "LinkedIn banner",
+   "internal": false,
+   "photo": false,
+   "defTheme": 0,
+   "sizes": [
+    "li",
+    "lic"
+   ],
+   "designedSizes": [
+    "li",
+    "lic"
+   ],
+   "fields": [
+    {
+     "k": "headline",
+     "label": "Headline",
+     "def": "Design Beyond *Boundaries*"
+    },
+    {
+     "k": "sub",
+     "label": "Sub-line",
+     "def": "Branding · Creative production · Marketing · Digital"
+    }
+   ],
+   "clientDefaults": {
+    "headline": "*{brand}*",
+    "sub": "What you do · Who it is for · Where you are"
+   }
+  },
+  {
+   "id": "highlights",
+   "name": "Highlight covers",
+   "internal": false,
+   "photo": false,
+   "defTheme": 0,
+   "sizes": [
+    "story",
+    "post",
+    "square",
+    "wide"
+   ],
+   "designedSizes": [
+    "story"
+   ],
+   "fields": [
+    {
+     "k": "labels",
+     "label": "Highlights (comma separated)",
+     "def": "Work, Services, Podcast, Team, Reviews"
+    }
+   ],
+   "clientDefaults": {
+    "labels": "About, Services, Reviews, Team, Contact"
+   }
+  },
+  {
+   "id": "event",
+   "name": "Event / webinar",
+   "internal": false,
+   "photo": true,
+   "defTheme": 0,
+   "sizes": [
+    "post",
+    "wide",
+    "square",
+    "story"
+   ],
+   "designedSizes": [
+    "post",
+    "wide"
+   ],
+   "fields": [
+    {
+     "k": "format",
+     "label": "Format",
+     "def": "Live webinar"
+    },
+    {
+     "k": "title",
+     "label": "Title",
+     "def": "Brand Trust in the *Age of AI*"
+    },
+    {
+     "k": "date",
+     "label": "Date",
+     "def": "Thu, 12 November"
+    },
+    {
+     "k": "time",
+     "label": "Time",
+     "def": "4 PM WAT · 4 PM CET"
+    },
+    {
+     "k": "speaker",
+     "label": "Speaker",
+     "def": "Subomi Archibong"
+    },
+    {
+     "k": "speakerRole",
+     "label": "Speaker role",
+     "def": "Founder & CEO, Colorteam"
+    }
+   ],
+   "clientDefaults": {
+    "format": "Live event",
+    "title": "Your event *title* here",
+    "date": "Thu, 12 November",
+    "time": "6 PM",
+    "speaker": "Speaker Name",
+    "speakerRole": "Role, {brand}"
+   }
+  },
+  {
+   "id": "hiring",
+   "name": "Hiring post",
+   "internal": false,
+   "photo": false,
+   "defTheme": 0,
+   "sizes": [
+    "post",
+    "square",
+    "story",
+    "wide"
+   ],
+   "designedSizes": [
+    "post",
+    "square"
+   ],
+   "fields": [
+    {
+     "k": "headline",
+     "label": "Headline",
+     "def": "We’re *Hiring*"
+    },
+    {
+     "k": "role",
+     "label": "Role",
+     "def": "Copywriter"
+    },
+    {
+     "k": "details",
+     "label": "Details (one per line)",
+     "multiline": true,
+     "def": "Remote\nWarsaw or Lagos\nFull-time"
+    },
+    {
+     "k": "cta",
+     "label": "How to apply",
+     "def": "Apply at colorteam.io/careers"
+    }
+   ],
+   "clientDefaults": {
+    "role": "Job title",
+    "details": "Location\nFull-time",
+    "cta": "Apply at {web}"
+   }
+  },
+  {
+   "id": "case",
+   "name": "Case study",
+   "internal": false,
+   "photo": true,
+   "defTheme": 0,
+   "sizes": [
+    "post",
+    "square",
+    "story",
+    "wide"
+   ],
+   "designedSizes": [
+    "post"
+   ],
+   "fields": [
+    {
+     "k": "client",
+     "label": "Client",
+     "def": "Netflix Nigeria"
+    },
+    {
+     "k": "headline",
+     "label": "Headline",
+     "def": "Making Netflix Feel *Nigerian*, Every Week"
+    },
+    {
+     "k": "stat",
+     "label": "Result figure",
+     "def": "600K+"
+    },
+    {
+     "k": "statLabel",
+     "label": "Result label",
+     "def": "Instagram followers, up from under 10K"
+    }
+   ],
+   "clientDefaults": {
+    "client": "Client name",
+    "headline": "How we helped them *grow*",
+    "stat": "3x",
+    "statLabel": "more enquiries in six months"
+   }
+  },
+  {
+   "id": "proposal",
+   "name": "Proposal",
+   "internal": true,
+   "photo": false,
+   "defTheme": 0,
+   "sizes": [
+    "a4"
+   ],
+   "designedSizes": [
+    "a4"
+   ],
+   "fields": [
+    {
+     "k": "client",
+     "label": "Client name",
+     "def": "Mona & Co"
+    },
+    {
+     "k": "title",
+     "label": "Proposal title",
+     "def": "Sales Channel *Expansion*"
+    },
+    {
+     "k": "subtitle",
+     "label": "Summary",
+     "multiline": true,
+     "def": "More ways for people to buy what you make: a shop on Instagram, a gallery on Etsy, a Pinterest presence that sells, and order alerts in your pocket. Everything live by 28 November."
+    },
+    {
+     "k": "date",
+     "label": "Date",
+     "def": "29 October 2026"
+    },
+    {
+     "k": "closing",
+     "label": "Closing line",
+     "def": "Let’s build *together*."
+    },
+    {
+     "k": "contact",
+     "label": "Contact",
+     "multiline": true,
+     "def": "Subomi Archibong · Founder & CEO\nsubomi@colorteam.io · +48 722 162 814\ncolorteam.io"
+    }
+   ],
+   "clientDefaults": null
+  },
+  {
+   "id": "announcement",
+   "name": "Announcement",
+   "internal": false,
+   "photo": false,
+   "defTheme": 0,
+   "sizes": [
+    "post",
+    "square",
+    "story",
+    "wide"
+   ],
+   "designedSizes": [
+    "post",
+    "square",
+    "story"
+   ],
+   "fields": [
+    {
+     "k": "label",
+     "label": "Label",
+     "def": "New"
+    },
+    {
+     "k": "title",
+     "label": "Headline",
+     "def": "Something *worth* announcing"
+    },
+    {
+     "k": "body",
+     "label": "Body",
+     "multiline": true,
+     "def": "One or two lines that say what it is and why it matters."
+    },
+    {
+     "k": "cta",
+     "label": "Call to action",
+     "def": "colorteam.io"
+    }
+   ],
+   "clientDefaults": {
+    "cta": "{web}"
+   }
+  },
+  {
+   "id": "photo-quote",
+   "name": "Photo quote",
+   "internal": false,
+   "photo": true,
+   "defTheme": 0,
+   "sizes": [
+    "post",
+    "story",
+    "square",
+    "wide"
+   ],
+   "designedSizes": [
+    "post",
+    "story"
+   ],
+   "fields": [
+    {
+     "k": "quote",
+     "label": "Quote",
+     "multiline": true,
+     "def": "Design is the *quiet* part of trust."
+    },
+    {
+     "k": "name",
+     "label": "Name",
+     "def": "Subomi Archibong"
+    },
+    {
+     "k": "role",
+     "label": "Role",
+     "def": "Founder, Colorteam"
+    }
+   ],
+   "clientDefaults": {
+    "quote": "Good things take *time*.",
+    "name": "Your Name",
+    "role": "Founder, {brand}"
+   }
+  }
+ ],
+ "sizes": {
+  "post": {
+   "label": "Post 4:5",
+   "W": 1080,
+   "H": 1350
+  },
+  "square": {
+   "label": "Square 1:1",
+   "W": 1080,
+   "H": 1080
+  },
+  "story": {
+   "label": "Story 9:16",
+   "W": 1080,
+   "H": 1920
+  },
+  "yt": {
+   "label": "Thumbnail 16:9",
+   "W": 1280,
+   "H": 720
+  },
+  "wide": {
+   "label": "Landscape 16:9",
+   "W": 1600,
+   "H": 900
+  },
+  "li": {
+   "label": "Personal banner",
+   "W": 1584,
+   "H": 396
+  },
+  "lic": {
+   "label": "Company cover",
+   "W": 1128,
+   "H": 191
+  },
+  "a4": {
+   "label": "A4 page",
+   "W": 794,
+   "H": 1123
+  }
+ }
+}
