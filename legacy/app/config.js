@@ -17,10 +17,10 @@
   };
   // Plan entitlements (D5). null = unlimited. Mirrors public.plan_limit() in 0008_plan_limits.sql.
   var PLANS={
-    core:{seats:2,templates:12,requests:2,channels:3,custom:false,mcp:false},
-    growth:{seats:5,templates:24,requests:5,channels:6,custom:false,mcp:false},
-    max:{seats:null,templates:null,requests:null,channels:null,custom:true,mcp:true},
-    internal:{seats:null,templates:null,requests:null,channels:null,custom:true,mcp:true}
+    core:{seats:2,templates:12,requests:2,channels:3,custom:false,mcp:false,ai:false},
+    growth:{seats:5,templates:24,requests:5,channels:6,custom:false,mcp:false,ai:true},
+    max:{seats:null,templates:null,requests:null,channels:null,custom:true,mcp:true,ai:true},
+    internal:{seats:null,templates:null,requests:null,channels:null,custom:true,mcp:true,ai:true}
   };
   window.CT_PLAN_LIMITS=PLANS;
   // Limits for a workspace: its plan's defaults plus any extras Colorteam granted in settings.limits.

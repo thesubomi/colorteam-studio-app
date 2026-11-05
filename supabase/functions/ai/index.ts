@@ -4,6 +4,7 @@
 //   copy                 writes 3 options for a post's template fields and caption in the brand voice
 //   month_plan           turns a monthly brief into a list of posts (date, time, template, text, caption)
 // Structured output via output_config.format (JSON schema).
+// Plans: Growth, Max and internal (or settings.limits.ai = true).
 // Caller: any member of the workspace (kit pre-fill: owners and staff). Each call is logged in ai_usage and a
 // workspace stops at AI_DAILY_LIMIT calls a day (default 100).
 // Secrets: ANTHROPIC_API_KEY. Optional: AI_MODEL (default claude-sonnet-5-5), AI_DAILY_LIMIT.
@@ -59,8 +60,12 @@ Deno.serve(async (req) => {
   const limit = Number(Deno.env.get("AI_DAILY_LIMIT") || 100);
   const { count } = await db.from("ai_usage").select("id", { count: "exact", head: true }).eq("workspace_id", wsId).gte("at", new Date(Date.now() - 864e5).toISOString());
   if ((count || 0) >= limit) return json({ error: `This workspace has used its ${limit} AI requests for today. Try again tomorrow.` }, 429);
-  const { data: ws } = await db.from("workspaces").select("id,name,slug,settings").eq("id", wsId).single();
+  const { data: ws } = await db.from("workspaces").select("id,name,slug,plan,settings").eq("id", wsId).single();
   if (!ws) return json({ error: "Workspace not found" }, 404);
+  // Plan check (D5): Growth, Max and internal include AI; staff can grant it with settings.limits.ai = true.
+  const extra = ws.settings?.limits?.ai;
+  const allowed = extra != null ? extra === true : (ws.slug === "colorteam" || ["growth", "max", "internal"].includes(ws.plan));
+  if (!allowed) return json({ error: "AI writing and planning are part of the Growth and Max plans." }, 403);
 
   const model = Deno.env.get("AI_MODEL") || "claude-sonnet-5-5";
   // Structured output: the reply is JSON matching `schema` (output_config.format). Schemas follow its rules:
