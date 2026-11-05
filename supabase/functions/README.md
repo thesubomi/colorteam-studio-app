@@ -12,3 +12,7 @@ Auth emails (invite, sign-in link) use the project's email templates under Authe
 ## billing-portal
 
 One-click "Manage billing": checks the caller owns the workspace (or is staff), reads the Stripe customer from `workspaces.settings.billing.customer` and returns a Stripe customer-portal session URL. Secret: `STRIPE_SECRET_KEY` (a restricted key with Customer portal: Write is enough). JWT verification off; the function checks the caller itself. The app falls back to the portal's email login link (config `billingPortal`) if this fails.
+
+## notify
+
+Approval emails. The editor calls it after a file is sent for approval (event `sent`), approved (`approved`) or sent back (`changes`). It re-reads the file, checks the caller is in its workspace, then emails the workspace's owners and approvers (sent) or the file's maker (approved/changes) through SMTP on port 465. Secrets: `SMTP_USER`, `SMTP_PASS` (Google Workspace app password); optional `SMTP_HOST`, `SMTP_FROM_NAME`, `APP_URL`. Without the secrets it returns `skipped`. JWT verification off; the function checks the caller itself.
