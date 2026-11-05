@@ -2,11 +2,16 @@ function edVersion(f,label){return {at:new Date().toISOString(),by:CTS.me.name,l
 const ED_DESIGN_KEYS=['fields','offsets','theme','sizes','photo','tplId'];
 const edSlug=s=>String(s||'asset').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,60);
 
-function EdApproval({file,onSend,onDecide}){const [open,setOpen]=React.useState(false);const [text,setText]=React.useState('');const ref=useDismiss(open,setOpen);const appr=CTS.isApprover();
+const edApprLabel=()=>(window.ctClientWs&&ctClientWs())?'your approver':CTS.approverName;
+const ED_CHANNELS=['LinkedIn','Instagram','Facebook','X','TikTok','YouTube','Website','Email','Other'];
+function EdPosted({file,change,toast}){const [open,setOpen]=React.useState(false);const ref=useDismiss(open,setOpen);const p=file.posted||null;const today=new Date().toISOString().slice(0,10);const [f,setF]=React.useState({channel:'LinkedIn',date:today,url:''});
+const save=()=>{const list=[...(p&&p.list||[]),{...f,by:CTS.me.name,at:new Date().toISOString()}];change({posted:{list,last:f.date}},{noVersion:true});setOpen(false);setF({channel:'LinkedIn',date:today,url:''});toast('Marked as posted on '+f.channel);};
+return <div className="pop-wrap" ref={ref}><span className="ok-tag"><UiIcon n="check" s={14}/>{p&&p.list&&p.list.length?'Posted · '+p.list.map(x=>x.channel).join(', '):'Approved'}</span><button className="btn" onClick={()=>setOpen(o=>!o)}>{p&&p.list&&p.list.length?'Posted again':'Mark as posted'}</button>{open&&<div className="pop"><label className="fld"><span>Where</span><select className="f-in" value={f.channel} onChange={e=>setF({...f,channel:e.target.value})}>{ED_CHANNELS.map(c=><option key={c}>{c}</option>)}</select></label><label className="fld"><span>When</span><input className="f-in" type="date" value={f.date} onChange={e=>setF({...f,date:e.target.value})}/></label><label className="fld"><span>Link to the post (optional)</span><input className="f-in" placeholder="https://…" value={f.url} onChange={e=>setF({...f,url:e.target.value})}/></label><button className="btn primary sm" onClick={save}>Save</button></div>}</div>;}
+function EdApproval({file,onSend,onDecide,change,toast}){const [open,setOpen]=React.useState(false);const [text,setText]=React.useState('');const ref=useDismiss(open,setOpen);const appr=CTS.isApprover();
 if(appr&&file.status==='pending')return <div className="pop-wrap" ref={ref}><button className="btn" onClick={()=>setOpen(o=>!o)}>Request changes</button><button className="btn primary" onClick={()=>onDecide('approved','')}><UiIcon n="check" s={15}/>Approve</button>{open&&<div className="pop"><label className="fld"><span>What needs to change?</span><textarea className="f-in" rows="3" autoFocus value={text} onChange={e=>setText(e.target.value)}></textarea></label><button className="btn primary sm" onClick={()=>{onDecide('changes',text.trim()||'Please revise.');setOpen(false);setText('');}}>Send feedback</button></div>}</div>;
-if(file.status==='pending')return <button className="btn" disabled>Waiting for {CTS.approverName}</button>;
-if(file.status==='approved')return <span className="ok-tag"><UiIcon n="check" s={14}/>Approved</span>;
-return <div className="pop-wrap" ref={ref}><button className="btn primary" onClick={()=>setOpen(o=>!o)}>{file.status==='changes'?'Resubmit':'Send for approval'}</button>{open&&<div className="pop"><label className="fld"><span>Note for {CTS.approverName} (optional)</span><textarea className="f-in" rows="3" autoFocus value={text} onChange={e=>setText(e.target.value)}></textarea></label><button className="btn primary sm" onClick={()=>{onSend(text.trim());setOpen(false);setText('');}}>Send</button></div>}</div>;}
+if(file.status==='pending')return <button className="btn" disabled>Waiting for {edApprLabel()}</button>;
+if(file.status==='approved')return <EdPosted file={file} change={change} toast={toast}/>;
+return <div className="pop-wrap" ref={ref}><button className="btn primary" onClick={()=>setOpen(o=>!o)}>{file.status==='changes'?'Resubmit':'Send for approval'}</button>{open&&<div className="pop"><label className="fld"><span>Note for {edApprLabel()} (optional)</span><textarea className="f-in" rows="3" autoFocus value={text} onChange={e=>setText(e.target.value)}></textarea></label><button className="btn primary sm" onClick={()=>{onSend(text.trim());setOpen(false);setText('');}}>Send</button></div>}</div>;}
 
 function Editor({fileId,files,presence,library,team,toast,theme,setTheme,onBack,onJoin,followInit,clearFollow,cmReq,onOpenComment}){
 const remote=files.find(f=>f.id===fileId)||null;
@@ -37,7 +42,7 @@ const onPointerWorld=(x,y)=>{const t=Date.now();if(t-lastSend.current<40)return;
 const onOffset=(size,id,val)=>change(f=>{const m={...((f.offsets||{})[size]||{})};if(val)m[id]=val;else delete m[id];return {offsets:{...f.offsets,[size]:m}};});
 const snapshot=label=>{change(f=>({versions:[edVersion(f,label),...(f.versions||[])].slice(0,25)}),{noVersion:true});toast('Version saved');};
 const restore=v=>{change(f=>({...v.snap,versions:[edVersion(f,'Before restoring “'+v.label+'”'),...(f.versions||[])].slice(0,25)}),{noVersion:true});setSel(null);toast('Version restored');};
-const onSend=note=>{change(f=>({status:'pending',comment:'',note,versions:[edVersion(f,'Sent for approval'),...(f.versions||[])].slice(0,25)}),{noVersion:true});toast('Sent to '+CTS.approverName);};
+const onSend=note=>{change(f=>({status:'pending',comment:'',note,versions:[edVersion(f,'Sent for approval'),...(f.versions||[])].slice(0,25)}),{noVersion:true});toast('Sent to '+edApprLabel());};
 const onDecide=(status,comment)=>{change(f=>({status,comment,versions:[edVersion(f,status==='approved'?'Approved by '+CTS.me.name:'Changes requested'),...(f.versions||[])].slice(0,25)}),{noVersion:true});toast(status==='approved'?'Approved':'Feedback sent');};
 const me=CTS.me;
 const updC=fn=>change(f=>({comments:fn(f.comments||[])}),{noVersion:true});
@@ -67,11 +72,11 @@ return <div className="ed">
 <div className="bar-l"><button className="icon-btn" title="All files" onClick={onBack}><UiIcon n="arrow-left"/></button><img className="bar-logo" src={theme==='dark'?'assets/logo/wordmark-white.png':'assets/logo/wordmark-black.png'} alt="colorteam"/><span className="bar-sep">/</span><input className="title-in" value={file.title} onChange={e=>change({title:e.target.value},{noVersion:true})} aria-label="File name"/><StatusPill status={file.status}/></div>
 <div className="bar-r"><Presence list={presence} currentDoc={file.id} followUid={follow} onJoin={onJoin} onFollow={setFollow}/><CmInbox files={files} onOpen={onOpenComment}/><ThemeToggle theme={theme} setTheme={setTheme}/>
 <div className="pop-wrap" ref={menuRef}><button className="btn" disabled={!!busy} onClick={()=>setMenu(m=>!m)}><UiIcon n="download" s={15}/>{busy||'Export'}</button>{menu&&<div className="menu"><button onClick={()=>exportPng(false)}><UiIcon n="image" s={15}/><span>PNG<em>{CT_SIZES[target.size].label}{target.n>1?` · ${target.page+1}/${target.n}`:''}</em></span></button><button onClick={()=>exportPng(true)}><UiIcon n="images" s={15}/><span>PNG, all frames<em>{frames.length} files</em></span></button><button onClick={exportPdf}><UiIcon n="file-down" s={15}/><span>PDF, all frames<em>One page per frame</em></span></button></div>}</div>
-<EdApproval file={file} onSend={onSend} onDecide={onDecide}/></div>
+<EdApproval file={file} onSend={onSend} onDecide={onDecide} change={change} toast={toast}/></div>
 </header>
 <div className="ed-body">
 <div className="ed-main">
-{file.status==='changes'&&file.comment&&<div className="note-b"><b>{CTS.approverName}:</b> {file.comment}</div>}
+{file.status==='changes'&&file.comment&&<div className="note-b"><b>{(window.ctClientWs&&ctClientWs())?'Approver':CTS.approverName}:</b> {file.comment}</div>}
 {file.status==='pending'&&CTS.isApprover()&&file.note&&<div className="note-b"><b>{file.ownerName||'Designer'}:</b> {file.note}</div>}
 {follow&&people[follow]&&<div className="follow-tag" style={{background:people[follow].color}}>Following {people[follow].name.split(' ')[0]} · Esc to stop</div>}
 <Canvas file={file} tpl={tpl} sel={sel} setSel={s=>{setSel(s);if(!s){setOpenId(null);setDraft(null);}}} onOffset={onOffset} cursors={cursors} people={people} onPointerWorld={onPointerWorld} follow={followP} onStopFollow={()=>follow&&setFollow(null)} commenting={mode==='comment'} onPlace={placeComment} overlay={overlay} focus={focus}/>

@@ -5,13 +5,13 @@ return <header className="bar"><div className="bar-l"><img className="bar-logo" 
 function HmCard({f,presence,go,del}){const here=(presence||[]).filter(p=>!p.me&&p.docId===f.id);const tpl=CT_TEMPLATES.find(t=>t.id===f.tplId)||CT_TEMPLATES[0];const canDel=f.owner===CTS.me.uid||CTS.isApprover();
 return <div className="fc" role="button" tabIndex={0} onClick={()=>go({name:'file',id:f.id})} onKeyDown={e=>{if(e.key==='Enter')go({name:'file',id:f.id});}}>
 <div className="fc-th"><FileThumb file={f} bw={210} bh={150}/>{here.length>0&&<div className="fc-live">{here.map(p=><Avatar key={p.uid} p={p} size={22}/>)}</div>}{canDel&&<button className="icon-btn fc-del" title="Delete" onClick={e=>{e.stopPropagation();if(confirm('Delete “'+f.title+'”?'))del(f.id);}}><UiIcon n="trash-2" s={14}/></button>}</div>
-<div className="fc-b"><b>{f.title}</b><div className="fc-m"><span>{tpl.name} · {fmtRel(f.updatedAt)}</span><span className="row">{cmOpenCount(f)>0&&<span className="fc-cm" title="Open comments"><UiIcon n="message-circle" s={12}/>{cmOpenCount(f)}</span>}<StatusPill status={f.status}/></span></div></div></div>;}
+<div className="fc-b"><b>{f.title}</b><div className="fc-m"><span>{tpl.name} · {fmtRel(f.updatedAt)}</span><span className="row">{cmOpenCount(f)>0&&<span className="fc-cm" title="Open comments"><UiIcon n="message-circle" s={12}/>{cmOpenCount(f)}</span>}<StatusPill status={f.status==='approved'&&f.posted&&f.posted.list&&f.posted.list.length?'posted':f.status}/></span></div></div></div>;}
 
 function HmHome({files,presence,go,newFile,onJoin,del}){const me=CTS.me,appr=CTS.isApprover();const first=(me.name||'').split(' ')[0];const h=new Date().getHours();const greet=h<12?'Good morning':h<18?'Good afternoon':'Good evening';
 const live=(presence||[]).filter(p=>!p.me&&p.docId);
 const waiting=appr?files.filter(f=>f.status==='pending'):files.filter(f=>f.owner===me.uid&&f.status==='changes');
 const [q,setQ]=React.useState('');const [flt,setFlt]=React.useState('all');
-const shown=files.filter(f=>(flt==='all'||(flt==='mine'?f.owner===me.uid:f.status===flt))&&(!q||f.title.toLowerCase().includes(q.toLowerCase())));
+const isPosted=f=>!!(f.posted&&f.posted.list&&f.posted.list.length);const shown=files.filter(f=>(flt==='all'||(flt==='mine'?f.owner===me.uid:flt==='posted'?isPosted(f):flt==='approved'?f.status==='approved'&&!isPosted(f):f.status===flt))&&(!q||f.title.toLowerCase().includes(q.toLowerCase())));
 return <main className="home">
 <h1 className="home-t">{greet}, {first}</h1>
 <HmOnboarding files={files} go={go} newFile={newFile}/>
@@ -19,7 +19,7 @@ return <main className="home">
 {waiting.length>0&&<section className="hs"><h2>{appr?'Waiting for your approval':'Changes requested'}<span className="cnt">{waiting.length}</span></h2><div className="file-grid">{waiting.map(f=><HmCard key={f.id} f={f} presence={presence} go={go} del={del}/>)}</div></section>}
 <section className="hs"><h2>Start from a template</h2><div className="tpl-grid">{CT_TEMPLATES.map(t=>{const s=t.sizes[0],d=CT_SIZES[s];return <button key={t.id} className="tpl-c" onClick={()=>newFile(t.id)}><span className="tpl-th"><CtScaled W={d.W} H={d.H} bw={112} bh={112}><CtAsset tpl={t} size={s} fields={ctDefaults(t)} theme={t.defTheme||0} photo={t.photo?CT_SAMPLE_PHOTO:null}/></CtScaled></span><b>{t.name}</b><span>{t.sizes.length} size{t.sizes.length>1?'s':''}</span></button>;})}</div></section>
 <HmTplRequests toast={window.__ctToast||(()=>{})}/>
-<section className="hs"><div className="hs-h"><h2>Recent files</h2><div className="hs-tools"><div className="seg">{[['all','All'],['mine','Mine'],['pending','In review'],['approved','Approved']].map(([k,l])=><button key={k} className={flt===k?'on':''} onClick={()=>setFlt(k)}>{l}</button>)}</div><input className="f-in search" placeholder="Search files" value={q} onChange={e=>setQ(e.target.value)}/></div></div>
+<section className="hs"><div className="hs-h"><h2>Recent files</h2><div className="hs-tools"><div className="seg">{[['all','All'],['mine','Mine'],['pending','In review'],['approved','Approved'],['posted','Posted']].map(([k,l])=><button key={k} className={flt===k?'on':''} onClick={()=>setFlt(k)}>{l}</button>)}</div><input className="f-in search" placeholder="Search files" value={q} onChange={e=>setQ(e.target.value)}/></div></div>
 {shown.length?<div className="file-grid">{shown.map(f=><HmCard key={f.id} f={f} presence={presence} go={go} del={del}/>)}</div>:<p className="muted">No files match.</p>}</section>
 </main>;}
 
