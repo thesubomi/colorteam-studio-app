@@ -21,8 +21,8 @@ function InsKitGuide({toast}){const ws=ctClientWs();const kit=ws&&ws.settings&&w
  </>;}
 // The template library a workspace's plan includes: its own custom templates first, then the shared
 // library up to the plan's count. A file's current template always stays available to it.
-function ctTemplatesFor(ws,keepId){const lim=ctLimits(ws).templates;if(lim==null)return CT_TEMPLATES;
- const own=CT_TEMPLATES.filter(t=>t.db&&t.scope==='workspace');const shared=CT_TEMPLATES.filter(t=>!(t.db&&t.scope==='workspace'));
+function ctTemplatesFor(ws,keepId){const lim=ctLimits(ws).templates;const client=ws&&ws.slug!=='colorteam';const pool=client?CT_TEMPLATES.filter(t=>!CT_INTERNAL_TEMPLATES.includes(t.id)||t.id===keepId):CT_TEMPLATES;if(lim==null)return pool;
+ const own=pool.filter(t=>t.db&&t.scope==='workspace');const shared=pool.filter(t=>!(t.db&&t.scope==='workspace'));
  const list=own.concat(shared.slice(0,Math.max(0,lim-own.length)));
  if(keepId&&!list.some(t=>t.id===keepId)){const k=CT_TEMPLATES.find(t=>t.id===keepId);if(k)list.push(k);}return list;}
 Object.assign(window,{ctTemplatesFor,ctLayoutLocked,ctBrandWarnings,InsBrandCheck,InsKitGuide,ctClientWs});

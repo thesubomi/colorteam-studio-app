@@ -29,6 +29,7 @@ const save=React.useCallback(async()=>{const f=fileRef.current;if(!f)return;dirt
 const flush=()=>{const p=pend.current;pend.current={};editT.current=null;if(Object.keys(p).length)CTS.sendEdit({docId:fileId,patch:p});};
 const change=React.useCallback((patch,opts={})=>{const f=fileRef.current;if(!f)return;const p={...(typeof patch==='function'?patch(f):patch)};if(!Object.keys(p).length)return;
  const design=Object.keys(p).some(k=>ED_DESIGN_KEYS.includes(k));let extra={};
+ if(p.fields&&!('title' in p)){const oldT=CT_TEMPLATES.find(t=>t.id===f.tplId),newT=CT_TEMPLATES.find(t=>t.id===(p.tplId||f.tplId));if(oldT&&newT&&f.title===CTS.autoTitle(oldT,f.fields))extra.title=CTS.autoTitle(newT,p.fields);}
  if(design&&!opts.noVersion){const vs=f.versions||[];const last=vs[0];if(!last||Date.now()-new Date(last.at).getTime()>15*60000)extra.versions=[edVersion(f,'Auto-save'),...vs].slice(0,25);if(f.status==='approved'&&!('status' in p)){extra.status='draft';toast('Edited after approval. Send it again when it’s ready.');}}
  const n={...f,...p,...extra,updatedAt:new Date().toISOString(),updatedBy:CTS.me.name};setFile(n);dirty.current=true;clearTimeout(saveT.current);saveT.current=setTimeout(save,600);
  const bp={...p,...extra};delete bp.versions;if(typeof bp.photo==='string'&&bp.photo.length>150000)delete bp.photo;if(Object.keys(bp).length){Object.assign(pend.current,bp);if(!editT.current)editT.current=setTimeout(flush,50);}},[save]);

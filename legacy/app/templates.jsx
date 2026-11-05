@@ -19,7 +19,7 @@ function T6Bg({t,W,H}){return <div style={{position:'absolute',inset:0,backgroun
 <div style={{position:'absolute',inset:0,backgroundImage:T6_GRAIN,backgroundSize:'220px 220px',opacity:t.glow?.2:.1}}></div></div>;}
 function T6Pill({t,u,children,style,light}){return <div style={{display:'inline-block',border:`${1.5*u}px solid ${light?'rgba(255,255,255,.85)':t.line}`,borderRadius:999,padding:`${9*u}px ${26*u}px`,fontSize:26*u,lineHeight:1.2,color:light?'#FFFFFF':t.ink,whiteSpace:'nowrap',...style}}>{children}</div>;}
 function T6Chip({t,u,children,size=26,bg,ink,style}){return <span style={{alignSelf:'flex-start',display:'inline-block',background:bg||t.chipBg,color:ink||t.chipInk,borderRadius:999,padding:`${size*.38*u}px ${size*.9*u}px`,fontSize:size*u,fontWeight:600,lineHeight:1.15,whiteSpace:'nowrap',...style}}>{children}</span>;}
-function T6Pod({t,u,size=88}){return <div style={{display:'flex',alignItems:'center',gap:16*u}}><img src={t.pod} alt="" style={{height:size*u,width:size*u,borderRadius:size*.24*u,display:'block'}}/><span style={{fontWeight:500,fontSize:size*.33*u,lineHeight:1,letterSpacing:'-0.02em',color:t.ink}}>The<br/>Colorteam<br/>Podcast</span></div>;}
+function T6Pod({t,u,size=88}){if(t.kit||!t.pod)return <img src={t.logo} alt="" style={{height:40*u*(size/88),display:'block'}}/>;return <div style={{display:'flex',alignItems:'center',gap:16*u}}><img src={t.pod} alt="" style={{height:size*u,width:size*u,borderRadius:size*.24*u,display:'block'}}/><span style={{fontWeight:500,fontSize:size*.33*u,lineHeight:1,letterSpacing:'-0.02em',color:t.ink}}>The<br/>Colorteam<br/>Podcast</span></div>;}
 function T6Top({t,u,pod,top=64}){return <><div style={{position:'absolute',left:72*u,top:top*u}}>{pod?<T6Pod t={t} u={u}/>:<img src={t.logo} alt="colorteam" style={{height:40*u,display:'block'}}/>}</div><div style={{position:'absolute',right:72*u,top:(top+(pod?24:-2))*u}}>{ctWeb(t)&&<T6Pill t={t} u={u}>{ctWeb(t)}</T6Pill>}</div></>;}
 function T6Spark({c,s,style}){return <svg width={s} height={s} viewBox="0 0 100 100" style={{position:'absolute',...style}}><path d="M50 0C53 36 64 47 100 50C64 53 53 64 50 100C47 64 36 53 0 50C36 47 47 36 50 0Z" fill={c}/></svg>;}
 function CtPhoto({p,t,style,pos,outline}){const cut=p&&p.cutout;const o=outline?(t.outline||'#FFFFFF'):null;const f=o?`drop-shadow(8px 0 0 ${o}) drop-shadow(-8px 0 0 ${o}) drop-shadow(0 8px 0 ${o}) drop-shadow(0 -8px 0 ${o})`:undefined;
@@ -197,6 +197,28 @@ return [cover,...body.map(page),end];}});
 function CtAsset({tpl,size,fields,theme,photo,page=0,offsets,live,onLayerDown}){const s=CT_SIZES[size],t=CT_THEMES[theme]||CT_THEMES[0];const pages=tpl.render(fields,{W:s.W,H:s.H,t,p:photo,size});const pi=Math.max(0,Math.min(page,pages.length-1));const pg=pages[pi]||null;let body=pg;if(pg&&pg.props&&(live||offsets)){body=React.Children.toArray(pg.props.children).map((k,i)=>{const id=pi+':'+i;const o=offsets&&offsets[id];return <div key={id} data-layer={id} className={live?'ct-layer live':'ct-layer'} style={{position:'absolute',inset:0,pointerEvents:'none',transform:o?`translate(${o.x}px,${o.y}px)`:undefined}} onPointerDown={onLayerDown?e=>onLayerDown(id,e):undefined}>{k}</div>;});}return <div className={t.fontD?'ct-kitfont':undefined} style={{position:'relative',width:s.W,height:s.H,background:t.bg,color:t.ink,overflow:'hidden',fontFamily:t.fontB||'var(--font-sans),Inter,sans-serif','--kit-display':t.fontD||undefined}}>{body}</div>;}
 const ctPageCount=(tpl,size,fields)=>{const s=CT_SIZES[size];return tpl.render(fields,{W:s.W,H:s.H,t:CT_THEMES[0],p:null,size}).length;};
 function CtScaled({W,H,bw,bh,children,style}){const s=Math.min(bw/W,bh/H);return <div style={{width:W*s,height:H*s,position:'relative',overflow:'hidden',flex:'none',...style}}><div style={{width:W,height:H,transform:`scale(${s})`,transformOrigin:'0 0'}}>{children}</div></div>;}
-const ctDefaults=tpl=>Object.fromEntries(tpl.fields.map(x=>[x.k,x.def]));
+// Client workspaces get neutral sample copy with their own name in it; Colorteam keeps its real examples.
+// {brand} is the workspace name, {web} the website from the brand kit (or the name when there is none).
+const CT_CLIENT_DEFAULTS={
+ podcast:{episode:'01',guest:'Guest Name',role:'Title, Company',label:'New episode'},
+ quote:{quote:'Say the one thing your customers *remember*.',name:'Your Name',role:'Founder, {brand}'},
+ carousel:{kicker:'Tips from {brand}',title:'Three things we *always* do',points:'Start with why - One line on why it matters.\nKeep it simple - Short, useful, easy to act on.\nSay what is next - End with one clear step.',cta:'Follow {brand} for more'},
+ reel:{series:'{brand} · Episode 1',title:'The one thing we *never* skip'},
+ story:{headline:'New at {brand}: *something fresh*',body:'One or two lines about what is new and why people will care.',cta:'Find out more'},
+ team:{headline:'Meet the team',name:'Team Member',role:'Role, {brand}'},
+ youtube:{label:'Episode 01',title:'The *mistake* everyone makes'},
+ linkedin:{headline:'*{brand}*',sub:'What you do · Who it is for · Where you are'},
+ highlights:{labels:'About, Services, Reviews, Team, Contact'},
+ event:{format:'Live event',title:'Your event *title* here',date:'Thu, 12 November',time:'6 PM',speaker:'Speaker Name',speakerRole:'Role, {brand}'},
+ hiring:{role:'Job title',details:'Location\nFull-time',cta:'Apply at {web}'},
+ case:{client:'Client name',headline:'How we helped them *grow*',stat:'3x',statLabel:'more enquiries in six months'},
+ announcement:{cta:'{web}'},
+ 'photo-quote':{quote:'Good things take *time*.',name:'Your Name',role:'Founder, {brand}'}
+};
+// Colorteam's own sales documents never show in client workspaces.
+const CT_INTERNAL_TEMPLATES=['proposal'];
+const ctClientBrand=()=>{const w=window.CTS&&CTS.workspace;if(!w||w.slug==='colorteam')return null;const name=String(w.name||'').replace(/\s*\(demo[^)]*\)\s*$/i,'').trim()||'Your brand';const kit=w.settings&&w.settings.kit;const web=(kit&&kit.website||'').replace(/^https?:\/\//,'').replace(/\/$/,'');return {name,web:web||name};};
+const ctDefaults=tpl=>{const base=Object.fromEntries(tpl.fields.map(x=>[x.k,x.def]));const b=!tpl.db&&ctClientBrand();const o=b&&CT_CLIENT_DEFAULTS[tpl.id];if(!o)return base;
+ const fill=v=>String(v).replace(/\{brand\}/g,b.name).replace(/\{web\}/g,b.web);for(const k in o)if(k in base)base[k]=fill(o[k]);return base;};
 const CT_SAMPLE_PHOTO={src:'assets/imagery/portrait-cutout-woman-desaturated.webp',cutout:true,sample:true};
-Object.assign(window,{CT_THEMES,CT_SIZES,CT_TEMPLATES,CtAsset,CtScaled,ctPageCount,ctDefaults,CT_SAMPLE_PHOTO,ctRich,T6Bg,T6Spark});
+Object.assign(window,{CT_INTERNAL_TEMPLATES,CT_THEMES,CT_SIZES,CT_TEMPLATES,CtAsset,CtScaled,ctPageCount,ctDefaults,CT_SAMPLE_PHOTO,ctRich,T6Bg,T6Spark});
