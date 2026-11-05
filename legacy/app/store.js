@@ -135,7 +135,8 @@ if(!cloud){
    return (ws||[]).map(w=>({...w,members:(ms||[]).filter(m=>m.workspace_id===w.id).length,files:(rq||[]).filter(r=>r.workspace_id===w.id).length,pending:(rq||[]).filter(r=>r.workspace_id===w.id&&r.status==='pending').length}));},
   async create({slug,name,plan}){const {data,error}=await sb.from('workspaces').insert({slug,name,plan:plan||'core'}).select('id,slug,name,plan').single();if(error)throw error;workspaces=[...workspaces,{...data,role:'staff'}];return data;},
   async members(wsId){const {data,error}=await sb.from('memberships').select('email,name,role,created_at').eq('workspace_id',wsId).order('created_at');if(error)throw error;return data||[];},
-  async addMember(wsId,{email,name,role}){const {error}=await sb.from('memberships').upsert({workspace_id:wsId,email:email.trim().toLowerCase(),name:name||null,role:role||'editor'});if(error)throw error;},
+  async addMember(wsId,{email,name,role,silent}){email=email.trim().toLowerCase();if(silent){const {error}=await sb.from('memberships').upsert({workspace_id:wsId,email,name:name||null,role:role||'editor'});if(error)throw error;return {email_sent:false};}
+   const {data,error}=await sb.functions.invoke('invite',{body:{workspace_id:wsId,email,name:name||'',role:role||'editor',redirect:location.origin+location.pathname}});if(error){let msg=error.message;try{const j=await error.context.json();msg=j.error||msg;}catch(e){}throw new Error(msg);}if(data&&data.error)throw new Error(data.error);return data||{};},
   async removeMember(wsId,email){const {error}=await sb.from('memberships').delete().eq('workspace_id',wsId).eq('email',email);if(error)throw error;}
  };
  const split=x=>{const {id,owner,email,status,comment,createdAt,...data}=x;return {data,status:status||'draft',comment:comment||''};};

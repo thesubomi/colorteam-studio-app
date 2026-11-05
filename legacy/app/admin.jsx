@@ -8,7 +8,7 @@ const load=()=>CTS.admin.list().then(setRows).catch(e=>toast(e.message));React.u
 const loadMem=id=>CTS.admin.members(id).then(setMem).catch(e=>toast(e.message));
 const slugify=s=>s.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'').slice(0,40);
 const create=async e=>{e.preventDefault();setBusy(true);try{await CTS.admin.create({name:f.name.trim(),slug:f.slug||slugify(f.name),plan:f.plan});setF({name:'',slug:'',plan:'core'});toast('Workspace created');load();}catch(x){toast(x.message);}setBusy(false);};
-const add=async e=>{e.preventDefault();if(!nm.email.trim())return;setBusy(true);try{await CTS.admin.addMember(open.id,nm);setNm({email:'',name:'',role:'editor'});toast('Member added');loadMem(open.id);load();}catch(x){toast(x.message);}setBusy(false);};
+const add=async e=>{e.preventDefault();if(!nm.email.trim())return;setBusy(true);try{const r=await CTS.admin.addMember(open.id,nm);setNm({email:'',name:'',role:'editor'});toast(r.email_sent?'Invite sent to '+nm.email:'Member added. '+(r.warning||''));loadMem(open.id);load();}catch(x){toast(x.message);}setBusy(false);};
 const remove=async email=>{if(!confirm('Remove '+email+' from '+open.name+'?'))return;try{await CTS.admin.removeMember(open.id,email);loadMem(open.id);load();}catch(x){toast(x.message);}};
 const enter=w=>{CTS.setWorkspace(w.slug);go({name:'home'});};
 return <main className="adm"><div className="adm-h"><h1>Workspaces</h1><p className="muted">One Studio per client. Colorteam staff can enter any of them; clients only see their own.</p></div>
@@ -21,8 +21,8 @@ return <main className="adm"><div className="adm-h"><h1>Workspaces</h1><p classN
 function HmTeam({toast}){const ws=CTS.workspace;const [mem,setMem]=React.useState([]);const [nm,setNm]=React.useState({email:'',name:'',role:'editor'});const [busy,setBusy]=React.useState(false);
 const canManage=CTS.isStaff||(ws&&ws.role==='owner');
 const load=()=>ws&&CTS.admin.members(ws.id).then(setMem).catch(e=>toast(e.message));React.useEffect(()=>{load();},[ws&&ws.id]);
-const add=async e=>{e.preventDefault();if(!nm.email.trim())return;setBusy(true);try{await CTS.admin.addMember(ws.id,nm);setNm({email:'',name:'',role:'editor'});toast('Added. They can sign in with a link to that email.');load();}catch(x){toast(x.message);}setBusy(false);};
-const setRole=async(email,role)=>{try{await CTS.admin.addMember(ws.id,{email,name:(mem.find(m=>m.email===email)||{}).name,role});load();}catch(x){toast(x.message);}};
+const add=async e=>{e.preventDefault();if(!nm.email.trim())return;setBusy(true);try{const r=await CTS.admin.addMember(ws.id,nm);setNm({email:'',name:'',role:'editor'});toast(r.email_sent?'Invite sent to '+nm.email:'Added. '+(r.warning||'They can request a sign-in link.'));load();}catch(x){toast(x.message);}setBusy(false);};
+const setRole=async(email,role)=>{try{await CTS.admin.addMember(ws.id,{email,name:(mem.find(m=>m.email===email)||{}).name,role,silent:true});load();}catch(x){toast(x.message);}};
 const remove=async email=>{if(email===CTS.me.email){toast('You cannot remove yourself.');return;}if(!confirm('Remove '+email+'?'))return;try{await CTS.admin.removeMember(ws.id,email);load();}catch(x){toast(x.message);}};
 if(!ws)return null;
 return <main className="adm"><div className="adm-h"><h1>{ws.name} team</h1><p className="muted">{canManage?'Owners can add people, change roles and remove them. Approvers sign off content; editors make it.':'Your team. Ask an owner to add or change people.'}</p></div>
