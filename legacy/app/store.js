@@ -72,11 +72,14 @@ if(!cloud){
 // Supabase serialises auth across tabs with a browser lock. If another tab freezes while holding it
 // (a sleeping laptop, an old build), every new tab would wait forever on the boot screen. Wait up to
 // 5 seconds, then carry on without it.
+// Once it has timed out, later calls only take the lock if it is free right now.
+let ctLockStale=false;
 async function ctAuthLock(name,acquireTimeout,fn){
  if(typeof navigator==='undefined'||!navigator.locks||!window.AbortController)return fn();
+ if(ctLockStale)return navigator.locks.request(name,{mode:'exclusive',ifAvailable:true},async l=>{if(l)ctLockStale=false;return await fn();});
  const ctl=new AbortController();const t=setTimeout(()=>ctl.abort(),5000);
  try{return await navigator.locks.request(name,{mode:'exclusive',signal:ctl.signal},async()=>{clearTimeout(t);return await fn();});}
- catch(e){if(e&&e.name==='AbortError'){console.warn('Studio: sign-in lock busy in another tab, continuing');return await fn();}throw e;}
+ catch(e){if(e&&e.name==='AbortError'){if(!ctLockStale)console.warn('Studio: sign-in lock busy in another tab, continuing');ctLockStale=true;return await fn();}throw e;}
 }
  const sb=window.supabase.createClient(C.supabase.url,C.supabase.anonKey,{auth:{lock:ctAuthLock}});
  let live=null,filesCh=null,libCh=null,lt=null;
