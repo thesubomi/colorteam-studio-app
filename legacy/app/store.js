@@ -69,7 +69,16 @@ if(!cloud){
  let tk=0;
  setInterval(()=>{if(!S.me||!window.CT_SIZES||!mine.docId)return;tk++;for(const s of SIMS){if(s.docId!==mine.docId||s.email===S.me.email)continue;const f=norm(files).find(x=>x.id===s.docId);if(!f)continue;const size=f.sizes[0],d=window.CT_SIZES[size];const t=tk*0.045+s.ph;const x=d.W*(0.5+0.32*Math.sin(t*0.6)+0.07*Math.sin(t*2.1));const y=d.H*(0.5+0.34*Math.sin(t*0.37+s.ph)+0.05*Math.cos(t*1.7));const ph=Math.floor(tk/70)%5;const sel=ph===0?null:{size,page:0,id:'0:'+(ph+1)};emit('cursor',{uid:s.uid,docId:s.docId,x,y,sel});}},60);
 }else{
- const sb=window.supabase.createClient(C.supabase.url,C.supabase.anonKey);
+// Supabase serialises auth across tabs with a browser lock. If another tab freezes while holding it
+// (a sleeping laptop, an old build), every new tab would wait forever on the boot screen. Wait up to
+// 5 seconds, then carry on without it.
+async function ctAuthLock(name,acquireTimeout,fn){
+ if(typeof navigator==='undefined'||!navigator.locks||!window.AbortController)return fn();
+ const ctl=new AbortController();const t=setTimeout(()=>ctl.abort(),5000);
+ try{return await navigator.locks.request(name,{mode:'exclusive',signal:ctl.signal},async()=>{clearTimeout(t);return await fn();});}
+ catch(e){if(e&&e.name==='AbortError'){console.warn('Studio: sign-in lock busy in another tab, continuing');return await fn();}throw e;}
+}
+ const sb=window.supabase.createClient(C.supabase.url,C.supabase.anonKey,{auth:{lock:ctAuthLock}});
  let live=null,filesCh=null,libCh=null,lt=null;
  const fromRow=r=>{const d=r.data||{};return {...d,id:r.id,owner:r.uid,email:r.email,status:r.status,comment:r.comment||'',createdAt:r.at,updatedAt:d.updatedAt||r.at,ownerName:d.ownerName||d.by||(r.email||'').split('@')[0]};};
  const loadFiles=async()=>{if(!workspace)return;const {data,error}=await sb.from('requests').select('*').eq('workspace_id',workspace.id);if(error){console.error(error);return;}files=data.map(fromRow);pubFiles();};
