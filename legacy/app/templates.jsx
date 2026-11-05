@@ -197,5 +197,5 @@ function CtAsset({tpl,size,fields,theme,photo,page=0,offsets,live,onLayerDown}){
 const ctPageCount=(tpl,size,fields)=>{const s=CT_SIZES[size];return tpl.render(fields,{W:s.W,H:s.H,t:CT_THEMES[0],p:null,size}).length;};
 function CtScaled({W,H,bw,bh,children,style}){const s=Math.min(bw/W,bh/H);return <div style={{width:W*s,height:H*s,position:'relative',overflow:'hidden',flex:'none',...style}}><div style={{width:W,height:H,transform:`scale(${s})`,transformOrigin:'0 0'}}>{children}</div></div>;}
 const ctDefaults=tpl=>Object.fromEntries(tpl.fields.map(x=>[x.k,x.def]));
-const CT_SAMPLE_PHOTO={src:'assets/imagery/portrait-cutout-woman-desaturated.png',cutout:true,sample:true};
+const CT_SAMPLE_PHOTO={src:'assets/imagery/portrait-cutout-woman-desaturated.webp',cutout:true,sample:true};
 Object.assign(window,{CT_THEMES,CT_SIZES,CT_TEMPLATES,CtAsset,CtScaled,ctPageCount,ctDefaults,CT_SAMPLE_PHOTO,ctRich,T6Bg,T6Spark});

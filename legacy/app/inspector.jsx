@@ -4,9 +4,9 @@ const INS_BUILTIN=[
 {kind:'logo',name:'Wordmark lime',src:'assets/brand26/mark-green.png',dark:true},
 {kind:'logo',name:'Podcast mark',src:'assets/logo/podcast-mark-lime.png'},
 {kind:'logo',name:'Podcast mark on black',src:'assets/brand26/podcast-mark-onblack.png',dark:true},
-{kind:'photo',name:'Cut-out portrait',src:'assets/imagery/portrait-cutout-woman-desaturated.png'},
-{kind:'photo',name:'Portrait, chair',src:'assets/imagery/portrait-cutout-man-chair.png'},
-{kind:'headshot',name:'Heather Winkle',src:'assets/imagery/heather-winkle.png'}];
+{kind:'photo',name:'Cut-out portrait',src:'assets/imagery/portrait-cutout-woman-desaturated.webp'},
+{kind:'photo',name:'Portrait, chair',src:'assets/imagery/portrait-cutout-man-chair.webp'},
+{kind:'headshot',name:'Heather Winkle',src:'assets/imagery/heather-winkle.webp'}];
 const INS_SW=[['Black','#0A0A0A'],['Stone','#DEDCD0'],['Pink','#F2B0CD'],['Lime','#A8FC78'],['Card','#161616'],['Light field','#ECEAE2'],['Warm grey','#57554D'],['Sage','#929A92'],['Podcast cream','#F3F2E6'],['Pale lime','#D4FFC0']];
 function insRead(file,max=1400){return new Promise(res=>{const fr=new FileReader();fr.onload=()=>{const i=new Image();i.onload=()=>{const s=Math.min(1,max/Math.max(i.width,i.height));const c=document.createElement('canvas');c.width=Math.round(i.width*s);c.height=Math.round(i.height*s);c.getContext('2d').drawImage(i,0,0,c.width,c.height);res(c.toDataURL(/png|webp|gif/.test(file.type)?'image/png':'image/jpeg',.86));};i.onerror=()=>res(fr.result);i.src=fr.result;};fr.readAsDataURL(file);});}
 function InsSec({title,right,children}){return <section className="sec"><div className="sec-h"><span>{title}</span>{right}</div>{children}</section>;}
