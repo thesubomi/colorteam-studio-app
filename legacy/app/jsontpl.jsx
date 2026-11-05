@@ -48,4 +48,8 @@ function ctRenderJson(tpl,f,{W,H,t,p,size}){const kit=(window.CTS&&CTS.workspace
 // Register JSON templates next to the code ones. Later (step 51) they also come from the database.
 function ctRegisterJsonTemplates(list){(list||[]).forEach(tpl=>{if(!tpl||!tpl.id||CT_TEMPLATES.some(x=>x.id===tpl.id))return;CT_TEMPLATES.push({...tpl,json:true,render(f,ctx){return ctRenderJson(tpl,f,ctx);}});});}
 ctRegisterJsonTemplates(window.CT_JSON_TEMPLATES);
-Object.assign(window,{ctRenderJson,ctRegisterJsonTemplates,ctThemesFromKit,ctApplyWorkspaceThemes});
+// Templates from the database replace the previous database set (never the code or bundled ones).
+function ctSetDbTemplates(list){for(let i=CT_TEMPLATES.length-1;i>=0;i--)if(CT_TEMPLATES[i].db)CT_TEMPLATES.splice(i,1);
+ (list||[]).forEach(tpl=>{if(!tpl||!tpl.id||!tpl.layouts)return;const idx=CT_TEMPLATES.findIndex(x=>x.id===tpl.id);const entry={...tpl,json:true,db:true,render(f,ctx){return ctRenderJson(tpl,f,ctx);}};if(idx>=0)CT_TEMPLATES[idx]=entry;else CT_TEMPLATES.push(entry);});
+ window.dispatchEvent(new Event('ct-templates'));}
+Object.assign(window,{ctSetDbTemplates,ctRenderJson,ctRegisterJsonTemplates,ctThemesFromKit,ctApplyWorkspaceThemes});
