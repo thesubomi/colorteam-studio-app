@@ -7,7 +7,9 @@ React.useEffect(()=>{const h=()=>setRoute(parse());window.addEventListener('hash
 const go=r=>{location.hash=r.name==='file'?'/file/'+encodeURIComponent(r.id):r.name==='calendar'?'/calendar':r.name==='guidelines'?'/guidelines':r.name==='admin'?'/admin':r.name==='team'?'/team':r.name==='account'?'/account':r.name==='kit'?'/kit':r.name==='foundation'?'/foundation':r.name==='templates'?'/templates':r.name==='billing'?'/billing':r.name==='deliverables'?'/deliverables':r.name==='agents'?'/agents':'/';};
 const [user,setUser]=React.useState(undefined);const [authErr,setAuthErr]=React.useState('');
 React.useEffect(()=>CTS.onAuth((u,e)=>{setUser(u||null);setAuthErr(e||'');}),[]);
+React.useEffect(()=>{if(user!==undefined)ctTrack.page(!user||route.name==='login'?'login':route.name);},[route.name,!!user,user===undefined]);
 const [wsTick,setWsTick]=React.useState(0);React.useEffect(()=>CTS.subscribeWorkspace(()=>setWsTick(x=>x+1)),[]);React.useEffect(()=>{const h=()=>setWsTick(x=>x+1);window.addEventListener('ct-templates',h);return()=>window.removeEventListener('ct-templates',h);},[]);
+React.useEffect(()=>{const w=CTS.workspace;if(user&&w)ctTrack.user({plan:w.slug==='colorteam'?'internal':(w.plan||'core'),role:CTS.isStaff?'staff':(w.role||'member')});},[user&&user.uid,wsTick]);
 const [files,setFiles]=React.useState([]);const [library,setLibrary]=React.useState([]);const [presence,setPresence]=React.useState([]);
 React.useEffect(()=>{if(!user)return;const a=CTS.subscribeFiles(setFiles),b=CTS.subscribeLibrary(setLibrary),c=CTS.subscribePresence(setPresence);return()=>{a();b();c();};},[user&&user.uid]);
 const [follow,setFollow]=React.useState(null);const [team,setTeam]=React.useState([]);const [cmReq,setCmReq]=React.useState(null);
@@ -15,7 +17,7 @@ React.useEffect(()=>{if(!user)return;CTS.team().then(t=>{const me=CTS.me;const l
 const openComment=(fid,cid)=>{setCmReq({cid,n:Date.now()});go({name:'file',id:fid});};
 const [msg,setMsg]=React.useState('');React.useEffect(()=>{window.__ctToast=toast;});const tm=React.useRef();const toast=m=>{window.__ctToast=toast;setMsg(m);clearTimeout(tm.current);tm.current=setTimeout(()=>setMsg(''),2400);};
 const join=(docId,uid)=>{setFollow(uid||null);go({name:'file',id:docId});};
-const newFile=async tplId=>{const t=CT_TEMPLATES.find(x=>x.id===tplId);const fields=ctDefaults(t);try{const id=await CTS.createFile({tplId,title:CTS.autoTitle(t,fields),fields,photo:null,sizes:t.sizes.slice(),theme:t.defTheme||0,offsets:{},schedule:null,versions:[]});go({name:'file',id});}catch(e){console.error(e);toast('Couldn’t create the file');}};
+const newFile=async tplId=>{const t=CT_TEMPLATES.find(x=>x.id===tplId);const fields=ctDefaults(t);try{const id=await CTS.createFile({tplId,title:CTS.autoTitle(t,fields),fields,photo:null,sizes:t.sizes.slice(),theme:t.defTheme||0,offsets:{},schedule:null,versions:[]});ctTrack.event('post_created',{template:tplId});go({name:'file',id});}catch(e){console.error(e);toast('Couldn’t create the file');}};
 const save=(id,patch)=>CTS.saveFile(id,{...patch,updatedAt:new Date().toISOString(),updatedBy:CTS.me.name}).catch(()=>toast('Couldn’t save'));
 const del=id=>CTS.deleteFile(id).then(()=>toast('File deleted')).catch(()=>toast('Couldn’t delete'));
 const toastEl=msg?<div className="toast">{msg}</div>:null;
@@ -32,4 +34,9 @@ window.addEventListener('unhandledrejection',e=>{const r=e.reason;const m=(r&&r.
 class CtBoundary extends React.Component{constructor(p){super(p);this.state={err:null};}static getDerivedStateFromError(err){return {err};}
  componentDidCatch(err,info){CTS.logError&&CTS.logError({message:err&&err.message||String(err),stack:((err&&err.stack)||'')+'\n'+((info&&info.componentStack)||'')},'crash');}
  render(){if(!this.state.err)return this.props.children;return <div className="login"><div className="login-c col"><h1>Something went wrong</h1><p className="muted">This screen hit an error. It has been reported to Colorteam. Reloading usually fixes it; your work is saved as you go.</p><button className="btn primary wide" onClick={()=>{location.hash='/';location.reload();}}>Reload the Studio</button></div></div>;}}
+// Cookie banner for analytics (live app only). Choice is kept per browser; Account has a switch to change it.
+function CtConsent(){const [c,setC]=React.useState(()=>ctTrack.choice());React.useEffect(()=>{const h=()=>setC(ctTrack.choice());window.addEventListener('ct-consent',h);return()=>window.removeEventListener('ct-consent',h);},[]);
+ if(!ctTrack.enabled||c)return null;
+ return <div className="ct-consent" role="dialog" aria-label="Cookies"><p><b>Help us improve the Studio?</b> We'd like to use Google Analytics cookies to see which screens and features get used. No ads, and we never send your content or email.</p><div className="row"><button className="btn sm ghost" onClick={()=>ctTrack.set('denied')}>No thanks</button><button className="btn sm primary" onClick={()=>ctTrack.set('granted')}>Allow</button></div></div>;}
 ReactDOM.createRoot(document.getElementById('root')).render(<CtBoundary><StudioApp/></CtBoundary>);
+{const el=document.createElement('div');el.id='ct-consent-root';document.body.appendChild(el);ReactDOM.createRoot(el).render(<CtConsent/>);}

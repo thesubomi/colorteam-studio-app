@@ -101,7 +101,7 @@ async function ctAuthLock(name,acquireTimeout,fn){
  S.confirmLink=async()=>{const p=S.pendingLink;if(!p)return;const {error}=await sb.auth.verifyOtp({token_hash:p.token_hash,type:p.type});
   const clean=()=>history.replaceState(null,'',location.pathname+(p.type==='recovery'?'#/account':''));
   if(error){S.pendingLink=null;clean();throw new Error(/expired|invalid/i.test(error.message)?'That link has expired or was already used. Enter your email and we\'ll send a fresh one.':error.message);}
-  S.pendingLink=null;clean();};
+  S.pendingLink=null;clean();if(window.ctTrack)ctTrack.event(p.type==='invite'||p.type==='signup'?'sign_up':'login',{method:'email_link'});};
  let live=null,filesCh=null,libCh=null,lt=null;
  const fromRow=r=>{const d=r.data||{};return {...d,id:r.id,owner:r.uid,email:r.email,status:r.status,comment:r.comment||'',createdAt:r.at,updatedAt:d.updatedAt||r.at,ownerName:d.ownerName||d.by||(r.email||'').split('@')[0]};};
  const loadFiles=async()=>{if(!workspace)return;const {data,error}=await sb.from('requests').select('*').eq('workspace_id',workspace.id);if(error){console.error(error);return;}files=data.map(fromRow);pubFiles();};

@@ -31,3 +31,34 @@
     return out;
   };
 })();
+// Google Analytics 4 (property "Colorteam Studio"). Only on the live app, and only after the person
+// says yes in the cookie banner: nothing loads and no cookies are set before that. No emails, names,
+// file titles or IDs are sent: just which screen is open and a few product events.
+(function(){
+  var GA_ID='G-9PKMRXNKJQ';
+  var live=location.hostname==='app.colorteam.io';
+  var force=false;try{force=localStorage.getItem('ctbs2_ga_test')==='1';}catch(e){}
+  var KEY='ctbs2_consent';
+  var get=function(){try{return localStorage.getItem(KEY);}catch(e){return null;}};
+  var loaded=false,queue=[];
+  function load(){
+    if(loaded)return;loaded=true;
+    window.dataLayer=window.dataLayer||[];
+    window.gtag=function(){window.dataLayer.push(arguments);};
+    gtag('consent','default',{analytics_storage:'granted',ad_storage:'denied',ad_user_data:'denied',ad_personalization:'denied'});
+    gtag('js',new Date());
+    gtag('config',GA_ID,{send_page_view:false,anonymize_ip:true,allow_google_signals:false,allow_ad_personalization_signals:false,debug_mode:force||undefined});
+    var s=document.createElement('script');s.async=true;s.src='https://www.googletagmanager.com/gtag/js?id='+GA_ID;document.head.appendChild(s);
+    queue.splice(0).forEach(function(a){gtag.apply(null,a);});
+  }
+  var A={
+    enabled:live||force,
+    choice:get,
+    set:function(v){try{localStorage.setItem(KEY,v);}catch(e){}if(v==='granted'){load();if(A.screen)A.page(A.screen);}else if(loaded&&window.gtag)gtag('consent','update',{analytics_storage:'denied'});window.dispatchEvent(new Event('ct-consent'));},
+    event:function(name,params){if(!A.enabled||get()!=='granted')return;var a=['event',name,params||{}];if(loaded&&window.gtag)gtag.apply(null,a);else queue.push(a);},
+    page:function(screen){A.screen=screen;A.event('page_view',{page_title:screen,page_location:location.origin+'/'+screen,page_path:'/'+screen});},
+    user:function(props){if(!A.enabled||get()!=='granted')return;var a=['set','user_properties',props];if(loaded&&window.gtag)gtag.apply(null,a);else queue.push(a);}
+  };
+  window.ctTrack=A;
+  if(A.enabled&&get()==='granted')load();
+})();
