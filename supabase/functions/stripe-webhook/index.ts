@@ -11,6 +11,12 @@ const ok = (b: unknown, s = 200) => new Response(JSON.stringify(b), { status: s,
 const slugify = (s: string) =>
   s.toLowerCase().normalize("NFKD").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 36) || "client";
 
+// Keep HubSpot in step (contact, plan, lifecycle Customer). Never blocks the webhook.
+const syncHubspot = (workspace_id: string) =>
+  fetch(Deno.env.get("SUPABASE_URL") + "/functions/v1/hubspot-sync", { method: "POST",
+    headers: { Authorization: "Bearer " + Deno.env.get("SUPABASE_SERVICE_ROLE_KEY"), "Content-Type": "application/json" },
+    body: JSON.stringify({ workspace_id }) }).then((r) => r.json()).catch((e) => ({ error: String(e) }));
+
 const FOUNDATION_START = {
   moodboards: { status: "not started", files: [] },
   logo: { status: "not started", files: [] },
@@ -72,7 +78,8 @@ Deno.serve(async (req) => {
     const sent = known
       ? await admin.auth.signInWithOtp({ email, options: { emailRedirectTo: appUrl, shouldCreateUser: false } })
       : await admin.auth.admin.inviteUserByEmail(email, { redirectTo: appUrl, data: { invited_to: ws.name, invited_by: "Colorteam", full_name: s.customer_details?.name || "" } });
-    return ok({ ok: true, workspace: ws.slug, email_sent: !sent.error, warning: sent.error?.message });
+    const hubspot = await syncHubspot(ws.id);
+    return ok({ ok: true, workspace: ws.slug, email_sent: !sent.error, warning: sent.error?.message, hubspot });
   }
 
   if (event.type === "customer.subscription.deleted" || event.type === "customer.subscription.updated") {
@@ -81,7 +88,8 @@ Deno.serve(async (req) => {
     if (!ws) return ok({ skipped: "no workspace for subscription" });
     const billing = { ...((ws.settings as any)?.billing || {}), status: sub.status, cancel_at: sub.cancel_at, updated_at: new Date().toISOString() };
     await admin.from("workspaces").update({ settings: { ...(ws.settings as any), billing } }).eq("id", ws.id);
-    return ok({ ok: true, status: sub.status });
+    const hubspot = await syncHubspot(ws.id);
+    return ok({ ok: true, status: sub.status, hubspot });
   }
 
   return ok({ ignored: event.type });
