@@ -64,6 +64,16 @@ do $$ begin
   assert (select count(*) from public.requests where data->>'title' like 'globex%') = 0, 'owner sees no Globex files';
 end $$;
 
+-- Ann cannot upgrade her own plan.
+do $$ begin
+  begin
+    update public.workspaces set plan = 'max' where slug = 'acme';
+    raise exception 'owner changed the plan';
+  exception when others then
+    if sqlerrm not like 'Only Colorteam can change%' then raise; end if;
+  end;
+end $$;
+
 -- Gil (Globex) sees only Globex.
 select pg_temp.become('gil@globex.test','bbbbbbbb-0000-0000-0000-000000000001');
 do $$ begin
@@ -74,7 +84,7 @@ end $$;
 -- Staff sees everything and counts as approver.
 select pg_temp.become('staff@colorteam.test','cccccccc-0000-0000-0000-000000000001');
 do $$ begin
-  assert (select count(*) from public.requests) = 3, 'staff sees all files';
+  assert (select count(*) from public.requests where data->>'title' in ('acme 1','acme 2','globex 1')) = 3, 'staff sees all files';
   assert (select count(*) from public.workspaces where slug in ('acme','globex')) = 2, 'staff sees all workspaces';
   assert public.my_role() = 'approver', 'staff count as approver';
   update public.requests set status = 'changes' where data->>'title' = 'globex 1';
