@@ -5,7 +5,8 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex,nofollow">
 <title>Brand Studio · Colorteam</title>
-<link rel="icon" href="assets/logo/logo-mark-lime.png">
+<link rel="icon" href="assets/brand26/mark-black.png" media="(prefers-color-scheme: light)">
+<link rel="icon" href="assets/brand26/mark-white.png" media="(prefers-color-scheme: dark)">
 <link rel="stylesheet" href="ds/tokens/fonts.css">
 <link rel="stylesheet" href="ds/tokens/colors.css">
 <link rel="stylesheet" href="ds/tokens/typography.css">
@@ -14,7 +15,7 @@
 <script src="ds/_ds_bundle.js"></script>
 <style>
 :root{--sel:#0D99FF;--guide:#F2385A;--ui:var(--font-sans),Inter,system-ui,sans-serif}
-:root,[data-theme=light]{--bg:#FAFAF9;--panel:#FFFFFF;--panel-2:#F4F4F2;--canvas:#EFEFEC;--line:#E8E8E5;--line-2:#D7D7D3;--text:#18181B;--text-2:#55555D;--text-3:#8B8B93;--hover:#F1F1EF;--primary:#18181B;--primary-ink:#FFFFFF;--shadow:0 1px 2px rgba(0,0,0,.05),0 10px 30px rgba(0,0,0,.08);color-scheme:light}
+:root,[data-theme=light]{--bg:#FAFAF9;--panel:#FFFFFF;--panel-2:#F4F4F2;--canvas:#EFEFEC;--line:#E8E8E5;--line-2:#D7D7D3;--text:#161616;--text-2:#57554D;--text-3:#8B8A82;--hover:#F1F1EF;--primary:#161616;--primary-ink:#FFFFFF;--shadow:0 1px 2px rgba(0,0,0,.05),0 10px 30px rgba(0,0,0,.08);color-scheme:light}
 [data-theme=dark]{--bg:#0F0F11;--panel:#18181B;--panel-2:#212125;--canvas:#0B0B0C;--line:#27272B;--line-2:#36363B;--text:#EDEDEF;--text-2:#A6A6AE;--text-3:#73737B;--hover:#232327;--primary:#EDEDEF;--primary-ink:#18181B;--shadow:0 1px 2px rgba(0,0,0,.4),0 10px 30px rgba(0,0,0,.45);color-scheme:dark}
 *{box-sizing:border-box}
 html,body{margin:0;background:var(--bg);color:var(--text);font-family:var(--ui);font-size:13px;line-height:1.45;-webkit-font-smoothing:antialiased}
@@ -54,7 +55,7 @@ textarea.f-in{resize:vertical;line-height:1.45}select.f-in{height:30px}
 .nav{display:flex;gap:2px;margin-left:10px}
 .nav button{border:0;background:none;padding:6px 10px;border-radius:6px;color:var(--text-2);font-weight:500}
 .nav button:hover{color:var(--text);background:var(--hover)}.nav button.on{color:var(--text);background:var(--panel-2)}
-.guide-btn{background:#A8FC78;border-color:#A8FC78;color:#0C2621}.guide-btn:hover{background:#C4F298;border-color:#C4F298;color:#0C2621}
+.guide-btn{background:#F2B0CD;border-color:#F2B0CD;color:#161616}.guide-btn:hover{background:#F6C6DB;border-color:#F6C6DB;color:#161616}
 @media(max-width:1000px){.guide-btn{font-size:0;gap:0;width:32px;padding:0}}
 .me-btn{border:0;background:none;padding:0;border-radius:50%;display:block}
 .pres{display:flex;align-items:center;padding:0 6px 0 10px}
@@ -193,8 +194,8 @@ textarea.f-in{resize:vertical;line-height:1.45}select.f-in{height:30px}
 .cal-dot{width:6px;height:6px;border-radius:50%;flex:none}
 .cal-side{border-left:1px solid var(--line);background:var(--panel);padding:24px 16px;display:flex;flex-direction:column;gap:10px}
 .cal-side h2{font-size:13px;font-weight:600}.cal-list{display:flex;flex-direction:column;gap:6px}
-.login{min-height:100vh;display:grid;place-items:center;padding:24px}
-.login-c{width:100%;max-width:360px;display:flex;flex-direction:column;gap:16px}
+.login{min-height:100vh;display:grid;place-items:center;padding:24px;background:radial-gradient(1200px 600px at 50% 115%,rgba(242,176,205,.35),transparent 60%),var(--bg)}
+.login-c{width:100%;max-width:380px;display:flex;flex-direction:column;gap:16px;background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:32px;box-shadow:var(--shadow)}
 .login-logo{height:22px;align-self:flex-start;margin-bottom:12px}
 .login-c h1{font-size:20px;font-weight:600}
 .login-c .col{gap:14px}
