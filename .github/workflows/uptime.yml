@@ -16,11 +16,14 @@ jobs:
       KEY: sb_publishable_ZHoIN242se2j2ltViYiI4w_yuVQ1I8j   # public key, already in the app
     steps:
       - name: App loads
-        run: curl -fsS --max-time 20 "$APP" | grep -q "Colorteam Studio"
+        run: |
+          curl -fsS --max-time 20 "$APP" | grep -q "Colorteam Studio"
       - name: Sign-in service healthy
-        run: curl -fsS --max-time 20 -H "apikey: $KEY" "$SB/auth/v1/health" > /dev/null
+        run: |
+          curl -fsS --max-time 20 -H "apikey: $KEY" "$SB/auth/v1/health" > /dev/null
       - name: Database answers
-        run: curl -fsS --max-time 20 -H "apikey: $KEY" "$SB/rest/v1/workspaces?select=id&limit=1" > /dev/null
+        run: |
+          curl -fsS --max-time 20 -H "apikey: $KEY" "$SB/rest/v1/workspaces?select=id&limit=1" > /dev/null
       - name: Edge functions answer
         run: |
           for f in invite billing-portal; do
