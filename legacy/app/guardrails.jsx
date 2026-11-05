@@ -19,4 +19,10 @@ function InsKitGuide({toast}){const ws=ctClientWs();const kit=ws&&ws.settings&&w
  {kit.dont&&<InsSec title="Don'ts"><p className="g-p" style={{whiteSpace:'pre-wrap'}}>{kit.dont}</p></InsSec>}
  {ws.settings.guidelines&&<InsSec title="Guidelines"><button className="btn sm" onClick={()=>{location.hash='/guidelines';}}>Open the full guidelines</button></InsSec>}
  </>;}
-Object.assign(window,{ctLayoutLocked,ctBrandWarnings,InsBrandCheck,InsKitGuide,ctClientWs});
+// The template library a workspace's plan includes: its own custom templates first, then the shared
+// library up to the plan's count. A file's current template always stays available to it.
+function ctTemplatesFor(ws,keepId){const lim=ctLimits(ws).templates;if(lim==null)return CT_TEMPLATES;
+ const own=CT_TEMPLATES.filter(t=>t.db&&t.scope==='workspace');const shared=CT_TEMPLATES.filter(t=>!(t.db&&t.scope==='workspace'));
+ const list=own.concat(shared.slice(0,Math.max(0,lim-own.length)));
+ if(keepId&&!list.some(t=>t.id===keepId)){const k=CT_TEMPLATES.find(t=>t.id===keepId);if(k)list.push(k);}return list;}
+Object.assign(window,{ctTemplatesFor,ctLayoutLocked,ctBrandWarnings,InsBrandCheck,InsKitGuide,ctClientWs});
