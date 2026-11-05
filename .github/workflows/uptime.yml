@@ -1,0 +1,29 @@
+# Uptime: every 30 minutes, check the staging app, Supabase and the edge functions answer.
+# A failed run makes GitHub email the repo owner. The database query also keeps the free
+# Supabase project from pausing for inactivity. Run it by hand from the Actions tab too.
+name: Uptime
+on:
+  schedule:
+    - cron: '7,37 * * * *'
+  workflow_dispatch:
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      APP: https://app-staging.colorteam.io/
+      SB: https://aqssqqiiwcfwyygmxoic.supabase.co
+      KEY: sb_publishable_ZHoIN242se2j2ltViYiI4w_yuVQ1I8j   # public key, already in the app
+    steps:
+      - name: App loads
+        run: curl -fsS --max-time 20 "$APP" | grep -q "Colorteam Studio"
+      - name: Sign-in service healthy
+        run: curl -fsS --max-time 20 -H "apikey: $KEY" "$SB/auth/v1/health" > /dev/null
+      - name: Database answers
+        run: curl -fsS --max-time 20 -H "apikey: $KEY" "$SB/rest/v1/workspaces?select=id&limit=1" > /dev/null
+      - name: Edge functions answer
+        run: |
+          for f in invite billing-portal; do
+            code=$(curl -s -o /dev/null -w '%{http_code}' -X OPTIONS --max-time 20 "$SB/functions/v1/$f")
+            echo "$f: $code"; test "$code" = "200"
+          done

@@ -6,6 +6,7 @@
   var h=location.hostname;
   var prod=(h==='colorteam.io'||h==='www.colorteam.io'||h==='app.colorteam.io');
   window.CT_STUDIO_ENV=prod?'production':'staging';
+  window.CT_RELEASE=typeof __CT_RELEASE__!=='undefined'?__CT_RELEASE__:'dev';
   window.CT_STUDIO_CONFIG={
     supabase:prod?PROD:STAGING,
     googleSignIn:false,

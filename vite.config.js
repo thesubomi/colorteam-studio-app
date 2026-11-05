@@ -22,8 +22,10 @@ function legacyBundle(){
     }
   };
 }
+const RELEASE = (process.env.GITHUB_SHA || 'dev').slice(0, 7);
 export default defineConfig({
   base: './',
+  define: { __CT_RELEASE__: JSON.stringify(RELEASE) },
   plugins: [react({ jsxRuntime: 'classic' }), legacyBundle()],
   build: { outDir: 'dist', assetsDir: '_app', sourcemap: false, chunkSizeWarningLimit: 1200 }
 });
