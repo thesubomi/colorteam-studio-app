@@ -81,7 +81,18 @@ async function ctAuthLock(name,acquireTimeout,fn){
  try{return await navigator.locks.request(name,{mode:'exclusive',signal:ctl.signal},async()=>{clearTimeout(t);return await fn();});}
  catch(e){if(e&&e.name==='AbortError'){if(!ctLockStale)console.warn('Studio: sign-in lock busy in another tab, continuing');ctLockStale=true;return await fn();}throw e;}
 }
+ // Email links arrive as ?token_hash=…&type=… and are only used when the person presses Continue, so
+ // mail scanners that open links don't burn the single-use token. Supabase errors arrive in the hash.
+ (function(){try{const q=new URLSearchParams(location.search);const th=q.get('token_hash'),ty=q.get('type');
+  if(th&&ty)S.pendingLink={token_hash:th,type:ty};
+  const h=new URLSearchParams(location.hash.replace(/^#/,''));const ed=h.get('error_description')||h.get('error');
+  if(ed){S.linkError=/expired|invalid/i.test(ed)?'That sign-in link has expired or was already used. Enter your email and we\'ll send a fresh one.':ed;history.replaceState(null,'',location.pathname+location.search);}
+ }catch(e){}})();
  const sb=window.supabase.createClient(C.supabase.url,C.supabase.anonKey,{auth:{lock:ctAuthLock}});
+ S.confirmLink=async()=>{const p=S.pendingLink;if(!p)return;const {error}=await sb.auth.verifyOtp({token_hash:p.token_hash,type:p.type});
+  const clean=()=>history.replaceState(null,'',location.pathname+(p.type==='recovery'?'#/account':''));
+  if(error){S.pendingLink=null;clean();throw new Error(/expired|invalid/i.test(error.message)?'That link has expired or was already used. Enter your email and we\'ll send a fresh one.':error.message);}
+  S.pendingLink=null;clean();};
  let live=null,filesCh=null,libCh=null,lt=null;
  const fromRow=r=>{const d=r.data||{};return {...d,id:r.id,owner:r.uid,email:r.email,status:r.status,comment:r.comment||'',createdAt:r.at,updatedAt:d.updatedAt||r.at,ownerName:d.ownerName||d.by||(r.email||'').split('@')[0]};};
  const loadFiles=async()=>{if(!workspace)return;const {data,error}=await sb.from('requests').select('*').eq('workspace_id',workspace.id);if(error){console.error(error);return;}files=data.map(fromRow);pubFiles();};

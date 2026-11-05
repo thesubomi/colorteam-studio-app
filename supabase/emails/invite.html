@@ -4,7 +4,7 @@
 <tr><td style="font-weight:800;font-size:22px;letter-spacing:-0.04em">colorteam <span style="font-weight:500;color:#57554D;letter-spacing:0">Studio</span></td></tr>
 <tr><td style="padding-top:28px;font-size:22px;font-weight:700;letter-spacing:-0.02em;line-height:1.25">Your Studio is set up</td></tr>
 <tr><td style="padding-top:12px;font-size:15px;line-height:1.55;color:#57554D">{{ if .Data.invited_by }}{{ .Data.invited_by }} added you{{ else }}You've been added{{ end }} to {{ if .Data.invited_to }}<b style="color:#161616">{{ .Data.invited_to }}</b>{{ else }}a workspace{{ end }} on Colorteam Studio. It's where your team makes on-brand posts from approved templates, sends them for sign-off and exports them at the right size.</td></tr>
-<tr><td style="padding-top:26px"><a href="{{ .ConfirmationURL }}" style="display:inline-block;background:#161616;color:#FFFFFF;text-decoration:none;font-weight:600;font-size:15px;padding:13px 22px;border-radius:12px">Open the Studio</a></td></tr>
+<tr><td style="padding-top:26px"><a href="{{ .RedirectTo }}?token_hash={{ .TokenHash }}&type=invite" style="display:inline-block;background:#161616;color:#FFFFFF;text-decoration:none;font-weight:600;font-size:15px;padding:13px 22px;border-radius:12px">Open the Studio</a></td></tr>
 <tr><td style="padding-top:22px;font-size:13px;line-height:1.5;color:#8B8A82">The link signs you in and works once. If you weren't expecting this, you can ignore the email.</td></tr>
 </table>
 <p style="font-size:12px;color:#8B8A82;margin:18px 0 0">Colorteam · Warsaw · <a href="https://colorteam.io" style="color:#8B8A82">colorteam.io</a></p>
