@@ -54,7 +54,11 @@ A client's brand kit produces the Style options automatically: **Brand** (ground
 
 ## Figma conventions for the importer
 
+Staff use **Templates → Import from Figma**: paste a link to the frame or section (right-click → Copy link to selection) and a Figma personal access token with read access. The result opens in the template editor with a preview; nothing is saved until you press Save.
+
+
 - One page per template, one frame per size, frame named like the size (`post`, `story`).
-- Layer names map to the format: `text:title`, `image:photo`, `logo`, `chip:label`, `rect`, `line`.
+- Layer names map to the format: `text:title`, `image` (the photo slot), `logo`, `chip:label` (a frame with a fill and a text inside), `rect`, `line`. Add `area` to a text name for a multi-line box (`text:body area`). Layers with other names are skipped, and default names like "Text 7" are flagged.
+- Frames can be drawn at any scale (540 wide is fine); positions and sizes are scaled to the Studio size.
 - Fill colours that match a kit colour are stored as the role; anything else as hex.
 - Text that should shrink with length gets a `fit:14` suffix in its name (max characters at full size).
