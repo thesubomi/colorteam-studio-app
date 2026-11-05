@@ -325,6 +325,32 @@ kbd{font-family:inherit;font-size:10px;color:var(--text-3);border:1px solid var(
 .gl-pdf{width:100%;height:calc(100vh - 170px);border:1px solid var(--line);border-radius:12px;background:var(--panel)}
 .adm-add{margin-top:10px;flex-wrap:nowrap}.adm-add .f-in{flex:1}.adm-add select{flex:0 0 110px}
 @media (max-width:860px){.adm-grid{grid-template-columns:1fr}}
+
+@media (max-width:640px){
+ html,body{overflow-x:hidden}
+ .shell>.bar{height:auto;display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;column-gap:8px;row-gap:6px;padding:8px 10px}
+ .shell>.bar .bar-l{display:contents}
+ .shell>.bar .bar-logo{grid-column:1;grid-row:1;height:18px}
+ .shell>.bar .ws-sel{grid-column:2;grid-row:1;justify-self:stretch;margin-left:0;min-width:0;width:100%;max-width:220px}
+ .shell>.bar .bar-r>[title$=" mode"]{display:none}
+ .shell>.bar .bar-r{grid-column:3;grid-row:1}
+ .bar .nav{grid-column:1/-1;grid-row:2;margin-left:-4px;overflow-x:auto;scrollbar-width:none;white-space:nowrap;flex-wrap:nowrap}
+ .bar .nav::-webkit-scrollbar{display:none}
+ .bar .pres{display:none}
+ .bar-r{gap:6px}
+ .ws-sel{max-width:150px}
+ .ed-body{grid-template-columns:minmax(0,1fr)}
+ .insp{min-width:0;width:100%}
+ .themes{grid-template-columns:repeat(3,1fr)}
+ .home{padding:20px 16px 64px;gap:28px}
+ .home-t{font-size:24px}
+ .adm{padding:20px 16px 48px}
+ .adm-card{overflow-x:auto}
+ .adm-kpis{grid-template-columns:repeat(2,1fr)}
+ .adm-add{flex-wrap:wrap}.adm-add .f-in,.adm-add select{flex:1 1 100%}
+ .login-c{padding:24px}
+ .tpl-grid{grid-template-columns:repeat(2,1fr)}
+}
 </style>
 </head>
 <body>
