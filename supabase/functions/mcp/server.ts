@@ -25,6 +25,7 @@ const autoTitle = (name: string, f: Record<string, unknown>) => {
   return name + " — " + v.replace(/\*/g, "").split("\n")[0].slice(0, 40);
 };
 
+const CHANNELS = ["LinkedIn", "Instagram", "Facebook", "X", "TikTok", "YouTube", "Website", "Email"];
 const TOOLS = [
   { name: "get_workspace", description: "The workspace this key belongs to: name, plan, brand kit (colours with roles, fonts, voice, things to avoid, banned words, website) and the styles posts can use. Read this before writing copy.",
     inputSchema: { type: "object", properties: {} } },
@@ -39,11 +40,24 @@ const TOOLS = [
       sizes: { type: "array", items: { type: "string" }, description: "Sizes to include, e.g. post, square, story, wide. Defaults to the template's designed sizes." },
       style: { type: ["string", "integer"], description: "Style name or index from get_workspace (e.g. Brand, Light, Accent)" },
       publish_date: { type: "string", description: "YYYY-MM-DD, shows the post on the Studio calendar" },
+      publish_time: { type: "string", description: "HH:MM, 24-hour, in the workspace's time zone (default 09:00)" },
+      time_zone: { type: "string", description: "IANA time zone, e.g. Europe/Warsaw (default Europe/Warsaw)" },
+      channels: { type: "array", items: { type: "string", enum: CHANNELS }, description: "Where it will be posted" },
+      caption: { type: "string", description: "Text that goes with the post. Write it in the brand voice from get_workspace." },
+      link: { type: "string", description: "Optional link; the Studio adds UTM tags per channel" },
+      campaign: { type: "string", description: "Optional UTM campaign name" },
       title: { type: "string" } } } },
-  { name: "update_post", description: "Change the text, sizes, style or publish date of a draft (or a post with changes requested).",
+  { name: "update_post", description: "Change the text, sizes, style, publish date and time, channels, caption or link of a draft (or a post with changes requested).",
     inputSchema: { type: "object", required: ["post_id"], properties: {
       post_id: { type: "string" }, fields: { type: "object", additionalProperties: { type: "string" } },
-      sizes: { type: "array", items: { type: "string" } }, style: { type: ["string", "integer"] }, publish_date: { type: ["string", "null"] }, title: { type: "string" } } } },
+      sizes: { type: "array", items: { type: "string" } }, style: { type: ["string", "integer"] }, publish_date: { type: ["string", "null"] },
+      publish_time: { type: "string", description: "HH:MM, 24-hour, in the workspace's time zone (default 09:00)" },
+      time_zone: { type: "string", description: "IANA time zone, e.g. Europe/Warsaw (default Europe/Warsaw)" },
+      channels: { type: "array", items: { type: "string", enum: CHANNELS }, description: "Where it will be posted" },
+      caption: { type: "string", description: "Text that goes with the post. Write it in the brand voice from get_workspace." },
+      link: { type: "string", description: "Optional link; the Studio adds UTM tags per channel" },
+      campaign: { type: "string", description: "Optional UTM campaign name" },
+      title: { type: "string" } } } },
   { name: "request_approval", description: "Send a draft to the workspace's approvers. They get an email and approve or ask for changes in Colorteam Studio. Agents can't approve.",
     inputSchema: { type: "object", required: ["post_id"], properties: { post_id: { type: "string" }, note: { type: "string", description: "Note for the approver" } } } },
 ];
@@ -97,6 +111,18 @@ Deno.serve(async (req) => {
     return i;
   };
   const checkDate = (d: unknown) => { if (d === null || d === undefined || d === "") return null; if (!/^\d{4}-\d{2}-\d{2}$/.test(String(d))) throw new Error("publish_date must be YYYY-MM-DD"); return String(d); };
+  const checkTime = (t: unknown) => { if (!t) return undefined; if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(String(t))) throw new Error("publish_time must be HH:MM (24-hour)"); return String(t); };
+  const checkTz = (z: unknown) => { if (!z) return undefined; try { new Intl.DateTimeFormat("en", { timeZone: String(z) }); return String(z); } catch { throw new Error("Unknown time_zone " + z); } };
+  const checkChannels = (c: unknown) => { if (c === undefined) return undefined; if (!Array.isArray(c)) throw new Error("channels must be a list"); const bad = c.filter((x) => !CHANNELS.includes(String(x))); if (bad.length) throw new Error("Unknown channel(s): " + bad.join(", ") + ". Channels: " + CHANNELS.join(", ")); return [...new Set(c.map(String))]; };
+  const publishing = (a: any, d: Record<string, unknown>) => {
+    const t = checkTime(a.publish_time); if (t) d.time = t;
+    const z = checkTz(a.time_zone); if (z) d.tz = z; else if (!d.tz && (t || d.schedule)) d.tz = "Europe/Warsaw";
+    const c = checkChannels(a.channels); if (c) d.channels = c;
+    if (typeof a.caption === "string") d.caption = a.caption.slice(0, 5000);
+    if (typeof a.link === "string") d.link = a.link.trim().slice(0, 500);
+    if (typeof a.campaign === "string") d.campaign = a.campaign.trim().slice(0, 80);
+    return d;
+  };
   const cleanFields = (tpl: any, given: Record<string, unknown> = {}) => {
     const keys = new Set(tpl.fields.map((f: any) => f.key));
     const unknown = Object.keys(given).filter((x) => !keys.has(x));
@@ -117,7 +143,7 @@ Deno.serve(async (req) => {
     if (!data) throw new Error("No post with that id in this workspace");
     return data;
   };
-  const summary = (r: any) => ({ id: r.id, title: r.data?.title, template: r.data?.tplId, status: r.status, publish_date: r.data?.schedule || null,
+  const summary = (r: any) => ({ id: r.id, title: r.data?.title, template: r.data?.tplId, status: r.status, publish_date: r.data?.schedule || null, publish_time: r.data?.schedule ? (r.data?.time || "09:00") : null, time_zone: r.data?.tz || null, channels: r.data?.channels || [], caption: r.data?.caption || "", link_url: r.data?.link || null,
     sizes: r.data?.sizes, updated_at: r.data?.updatedAt || r.at, link: link(r.id), feedback: r.status === "changes" ? r.comment || "" : undefined });
 
   async function call(name: string, a: any): Promise<unknown> {
@@ -141,6 +167,7 @@ Deno.serve(async (req) => {
         const data = { tplId: tpl.id, title: String(a.title || autoTitle(tpl.name, fields)).slice(0, 120), fields, photo: null,
           sizes: checkSizes(tpl, a.sizes), theme: styleIndex(a.style, tpl.defTheme || 0), offsets: {}, schedule: checkDate(a.publish_date), versions: [],
           ownerName: author, updatedBy: author + " (agent)", updatedAt: now, madeBy: "agent: " + k.name };
+        publishing(a, data as Record<string, unknown>);
         const row: Record<string, unknown> = { email: k.created_by, data, status: "draft", comment: "", workspace_id: k.workspace_id };
         if (k.created_uid) row.uid = k.created_uid;
         const { data: ins, error } = await db.from("requests").insert(row).select("*").single();
@@ -158,6 +185,7 @@ Deno.serve(async (req) => {
         if (a.style !== undefined) d.theme = styleIndex(a.style, d.theme || 0);
         if ("publish_date" in (a || {})) d.schedule = checkDate(a.publish_date);
         if (a.title) d.title = String(a.title).slice(0, 120);
+        publishing(a, d);
         d.updatedAt = new Date().toISOString(); d.updatedBy = author + " (agent)";
         const { data: up, error } = await db.from("requests").update({ data: d }).eq("id", r.id).select("*").single();
         if (error) throw new Error(error.message);

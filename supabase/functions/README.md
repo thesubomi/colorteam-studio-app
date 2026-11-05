@@ -22,3 +22,7 @@ Approval emails. The editor calls it after a file is sent for approval (event `s
 MCP server (Streamable HTTP, JSON responses) for agent access. Auth: `Authorization: Bearer cts_...` or `?key=`. Tools: get_workspace, list_templates, list_posts, create_post, update_post, request_approval (emails approvers via `notify`). Agents can't approve or publish. Edit `server.ts`; after template changes run `npm run build && node scripts/template-manifest.cjs && node scripts/build-mcp.cjs` and deploy `index.ts`. JWT verification off (keys are checked by hash).
 
 `notify` also accepts server-to-server calls from `mcp` (Authorization = the service key, `actor` in the body).
+
+## post-reminders
+
+Scheduler, version one (posting is by hand until channel APIs are approved). pg_cron calls it every 5 minutes (`0012_post_reminders.sql`, then `select public.schedule_post_reminders('<project url>')` once per environment). It emails: approvers 24 h before a scheduled post that isn't approved; the maker and owners at the time for approved posts (caption and UTM-tagged links included) or for posts that missed their time because they weren't approved. Each reminder is claimed in `post_reminders` before sending, released if the email fails (so the next run retries). Secrets: `SMTP_USER`, `SMTP_PASS`; optional `SMTP_HOST`, `SMTP_FROM_NAME`, `APP_URL`. JWT verification off; it takes no input and only sends what is due.

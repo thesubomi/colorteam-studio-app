@@ -31,7 +31,7 @@ return <>
 {tpl.photo&&<InsSec title="Photo"><div className="ph-row"><div className="ph-th">{file.photo?<img src={file.photo} alt=""/>:<span>Sample</span>}</div><div className="col"><label className="btn sm">Upload<input type="file" accept="image/*" hidden onChange={async e=>{const fl=e.target.files[0];e.target.value='';if(!fl)return;const src=await insRead(fl);change({photo:src});addLibrary({kind:'photo',name:fl.name.replace(/\.[^.]+$/,''),src});}}/></label><button className="btn sm" onClick={goAssets}>From library</button>{file.photo&&<button className="btn sm ghost" onClick={()=>change({photo:null})}>Remove</button>}</div></div></InsSec>}
 <InsSec title="Sizes"><div className="chips">{ctAllSizes(tpl).map(s=>{const fit=ctNativeFor(tpl,s)!==s;return <button key={s} className={'chip'+(file.sizes.includes(s)?' on':'')} onClick={()=>toggleSize(s)} title={fit?'Fitted from the '+CT_SIZES[ctNativeFor(tpl,s)].label+' layout':undefined}>{CT_SIZES[s].label}<span>{fit?'fitted':CT_SIZES[s].W+'×'+CT_SIZES[s].H}</span></button>;})}</div>{ctAllSizes(tpl).length>tpl.sizes.length&&<p className="muted" style={{fontSize:11,marginTop:6}}>Fitted sizes reuse the closest layout on your brand background. Ask for a tailored version under Template requests.</p>}</InsSec>
 <InsSec title="Style"><div className="themes">{CT_THEMES.map((t,i)=><button key={t.id} className={'theme-c'+(file.theme===i?' on':'')} onClick={()=>change({theme:i})}><span className="theme-th"><CtScaled W={d.W} H={d.H} bw={54} bh={54}><CtAsset tpl={tpl} size={size} fields={file.fields} theme={i} photo={photo} page={0} offsets={(file.offsets||{})[size]}/></CtScaled></span><span>{t.name}</span></button>)}</div></InsSec>
-<InsSec title="Publish date"><input type="date" className="f-in" value={file.schedule||''} onChange={e=>change({schedule:e.target.value||null},{noVersion:true})}/></InsSec>
+<InsPublish file={file} change={change} toast={toast}/>
 {anyOff&&<InsSec title="Layout"><button className="btn sm" onClick={()=>{change({offsets:{}});setSel(null);}}>Reset all positions</button></InsSec>}
 </>;}
 
@@ -62,4 +62,36 @@ return <>
 function Inspector(props){const [tab,setTab]=[props.tab,props.setTab];const nOpen=cmOpenCount(props.file);
 return <aside className="insp"><div className="insp-tabs">{[['design','Design'],['comments','Comments'],['assets','Assets'],['guide','Guide'],['history','History']].map(([k,l])=><button key={k} className={tab===k?'on':''} onClick={()=>setTab(k)}>{l}{k==='comments'&&nOpen>0&&<span className="tab-n">{nOpen}</span>}</button>)}</div>
 <div className="insp-body">{tab==='design'&&<InsDesign {...props} goAssets={()=>setTab('assets')}/>}{tab==='comments'&&<CmPanel {...props}/>}{tab==='assets'&&<InsAssets {...props}/>}{tab==='guide'&&<InsGuide toast={props.toast}/>}{tab==='history'&&<InsHistory {...props}/>}</div></aside>;}
+// Publish: when and where the post goes, its caption and link. Links get the workspace's UTM tags per channel.
+// Posting itself is by hand for now (download, post, mark as posted); the Studio emails a reminder at the time.
+const INS_LIMITS={X:280,LinkedIn:3000,Instagram:2200,Facebook:63206,TikTok:2200,YouTube:5000};
+function InsPublish({file,change,toast}){
+ const set=(p)=>change(p,{noVersion:true});
+ const preset=ctUtmPreset(CTS.kit&&CTS.kit.get&&CTS.kit.get());
+ const ch=file.channels||[];const tz=file.tz||ctBrowserTz();
+ const when=ctWhen(file);const past=when&&when<new Date();const approved=file.status==='approved';
+ const posted=!!(file.posted&&file.posted.list&&file.posted.list.length);
+ const setWhen=p=>set({...p,tz:file.tz||ctBrowserTz()});
+ const toggle=c=>set({channels:ch.includes(c)?ch.filter(x=>x!==c):[...ch,c]});
+ const tagged=c=>ctTagLink(file.link,c,preset,file.campaign,file.title);
+ const copy=t=>{try{navigator.clipboard.writeText(t);toast('Copied');}catch(e){}};
+ const text=c=>[(file.caption||'').trim(),file.link?tagged(c):''].filter(Boolean).join('\n\n');
+ const over=ch.filter(c=>INS_LIMITS[c]&&text(c).length>INS_LIMITS[c]);
+ let note=null;
+ if(file.schedule){
+  if(posted)note=<p className="muted">Posted. Nothing more to do.</p>;
+  else if(approved)note=<p className="pub-note ok">{past?'Due now: download it and post it, then mark it as posted.':'Scheduled. We email you at '+(file.time||'09:00')+' to post it.'}</p>;
+  else note=<p className="pub-note warn">{past?'This was due but isn’t approved yet, so it hasn’t gone out.':'Needs approval before it can go out. Approvers get a reminder the day before.'}</p>;
+ }
+ return <InsSec title="Publish">
+  <div className="pub-when"><input type="date" className="f-in" value={file.schedule||''} onChange={e=>setWhen({schedule:e.target.value||null})} aria-label="Publish date"/><input type="time" className="f-in" step="900" value={file.time||'09:00'} disabled={!file.schedule} onChange={e=>setWhen({time:e.target.value||'09:00'})} aria-label="Publish time"/></div>
+  {file.schedule&&<p className="muted" style={{fontSize:11,marginTop:4}}>{tz.replace(/_/g,' ')} time{file.tz&&file.tz!==ctBrowserTz()&&<> · <button className="lnk" onClick={()=>set({tz:ctBrowserTz()})}>use {ctBrowserTz().replace(/_/g,' ')}</button></>}</p>}
+  {note}
+  <div className="fld" style={{marginTop:10}}><span>Channels</span><div className="chips">{CT_CHANNELS.map(c=><button key={c} className={'chip'+(ch.includes(c)?' on':'')} onClick={()=>toggle(c)}>{c}</button>)}</div></div>
+  <label className="fld" style={{marginTop:10}}><span>Caption</span><textarea className="f-in" rows={4} value={file.caption||''} onChange={e=>set({caption:e.target.value})} placeholder="What goes with the post"/>{over.length>0&&<em className="pub-over">Too long for {over.join(', ')} ({over.map(c=>text(c).length+'/'+INS_LIMITS[c]).join(', ')})</em>}</label>
+  <label className="fld" style={{marginTop:10}}><span>Link (optional)</span><input className="f-in" value={file.link||''} onChange={e=>set({link:e.target.value})} placeholder="colorteam.io/studio"/></label>
+  {file.link&&<label className="fld" style={{marginTop:8}}><span>Campaign</span><input className="f-in" value={file.campaign||''} onChange={e=>set({campaign:e.target.value})} placeholder={preset.campaign||'e.g. november-launch'}/></label>}
+  {file.link&&!preset.off&&(ch.length?ch:['LinkedIn']).length>0&&<div className="pub-links">{(ch.length?ch:['LinkedIn']).map(c=><div key={c} className="pub-link"><b>{c}</b><span className="mono" title={tagged(c)}>{tagged(c).replace(/^https?:\/\//,'')}</span><button className="btn xs" onClick={()=>copy(file.caption?text(c):tagged(c))}>{file.caption?'Copy text':'Copy'}</button></div>)}{!ch.length&&<em className="muted" style={{fontSize:11}}>Pick channels to tag a link for each.</em>}</div>}
+  {file.caption&&!file.link&&ch.length>0&&<button className="btn xs" style={{marginTop:8}} onClick={()=>copy(file.caption)}>Copy caption</button>}
+ </InsSec>;}
 Object.assign(window,{Inspector});

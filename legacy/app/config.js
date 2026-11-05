@@ -62,3 +62,31 @@
   window.ctTrack=A;
   if(A.enabled&&get()==='granted')load();
 })();
+// Publishing helpers: channels, UTM tagging and the scheduled moment of a post.
+(function(){
+  var CH=['LinkedIn','Instagram','Facebook','X','TikTok','YouTube','Website','Email'];
+  var SRC={LinkedIn:'linkedin',Instagram:'instagram',Facebook:'facebook',X:'x',TikTok:'tiktok',YouTube:'youtube',Website:'website',Email:'newsletter'};
+  window.CT_CHANNELS=CH;
+  // utm = the workspace preset from the brand kit: {medium, campaign, sources:{Channel:source}, off}
+  window.ctUtmPreset=function(kit){var u=(kit&&kit.utm)||{};return {off:!!u.off,medium:u.medium||'social',campaign:u.campaign||'',sources:Object.assign({},SRC,u.sources||{})};};
+  window.ctSlug=function(s){return String(s||'').toLowerCase().normalize('NFKD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'').slice(0,60);};
+  window.ctTagLink=function(link,channel,preset,campaign,content){
+    link=String(link||'').trim();if(!link)return '';if(!/^https?:\/\//i.test(link))link='https://'+link;
+    var u;try{u=new URL(link);}catch(e){return link;}
+    if(preset.off||u.searchParams.has('utm_source'))return u.toString();
+    u.searchParams.set('utm_source',preset.sources[channel]||window.ctSlug(channel));
+    u.searchParams.set('utm_medium',channel==='Email'?'email':preset.medium);
+    var c=window.ctSlug(campaign||preset.campaign);if(c)u.searchParams.set('utm_campaign',c);
+    var ct=window.ctSlug(content);if(ct)u.searchParams.set('utm_content',ct);
+    return u.toString();
+  };
+  window.ctBrowserTz=function(){try{return Intl.DateTimeFormat().resolvedOptions().timeZone||'Europe/Warsaw';}catch(e){return 'Europe/Warsaw';}};
+  // The scheduled moment as a Date: schedule (YYYY-MM-DD) + time (HH:MM, default 09:00) in the post's time zone.
+  window.ctWhen=function(f){
+    if(!f||!f.schedule)return null;var t=f.time||'09:00',tz=f.tz||window.ctBrowserTz();
+    var guess=new Date(f.schedule+'T'+t+':00Z');if(isNaN(guess))return null;
+    try{var parts=new Intl.DateTimeFormat('en-US',{timeZone:tz,hourCycle:'h23',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'}).formatToParts(guess).reduce(function(o,p){o[p.type]=p.value;return o;},{});
+      var asTz=Date.UTC(+parts.year,+parts.month-1,+parts.day,+parts.hour,+parts.minute);return new Date(guess.getTime()-(asTz-guess.getTime()));}catch(e){return guess;}
+  };
+  window.ctWhenLabel=function(f){var d=window.ctWhen(f);if(!d)return '';return d.toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'})+', '+d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});};
+})();
