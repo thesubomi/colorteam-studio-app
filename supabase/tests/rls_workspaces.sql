@@ -116,6 +116,7 @@ do $$ begin
     if sqlerrm not like 'Only Colorteam can change%' then raise; end if;
   end;
   update public.workspaces set settings = settings || '{"kit":{"name":"Globex"}}' where slug = 'globex';
+  assert (select count(*) from public.tasks) = 0, 'clients cannot see deliverables';
 end $$;
 
 -- Staff sees everything and counts as approver.
@@ -128,6 +129,8 @@ do $$ begin
   update public.workspaces set settings = settings || '{"limits":{"seats":3}}' where slug = 'globex';
   assert public.plan_limit('22222222-2222-2222-2222-222222222222','seats') = 3, 'staff granted an extra seat';
   assert public.plan_limit('11111111-1111-1111-1111-111111111111','requests') = 5, 'Growth has 5 requests';
+  assert (select count(*) from public.tasks where workspace_id = '22222222-2222-2222-2222-222222222222' and kind = 'request' and status = 'open') = 2, 'each template request became a staff task';
+  assert (select due_on from public.tasks where workspace_id = '22222222-2222-2222-2222-222222222222' and kind = 'request' limit 1) = public.add_business_days(current_date, 5), 'Core turnaround is 5 working days';
 end $$;
 
 -- Nobody signed in sees nothing.
