@@ -1,0 +1,1 @@
+You're invited to {{ if .Data.invited_to }}{{ .Data.invited_to }} on {{ end }}Colorteam Studio
