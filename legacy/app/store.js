@@ -58,6 +58,7 @@ if(!cloud){
  S.onAuth=cb=>{authCb=cb;setTimeout(()=>{let s=null;try{s=JSON.parse(localStorage.getItem(LS_U));}catch(e){}if(s&&s.email)login(s.email);else cb(null);},0);return()=>{authCb=null;};};
  S.sendLink=async e=>{const m=e.trim().toLowerCase();localStorage.setItem(LS_U,JSON.stringify({email:m}));login(m);};
  S.signInGoogle=()=>S.sendLink('subomi@colorteam.io');
+ S.providers=async()=>[];S.signInPassword=async e=>S.sendLink(e);S.signInOAuth=async()=>{};S.sendReset=async()=>{};S.choosePassword=async()=>{S.needPassword=null;};
  S.signOut=async()=>{localStorage.removeItem(LS_U);S.me=null;S.role=null;authCb&&authCb(null);};
  S.updateName=async name=>{S.me={...S.me,name:name.trim()||S.me.name};};S.resetPassword=async()=>{};S.setPassword=async()=>{};
  S.team=async()=>TEAM;
@@ -93,7 +94,7 @@ async function ctAuthLock(name,acquireTimeout,fn){
   if(q.has('welcome')){S.welcome=true;history.replaceState(null,'',location.pathname+location.hash);}
   if(q.get('ws')){try{localStorage.setItem(LS_WS,q.get('ws'));}catch(e){}q.delete('ws');history.replaceState(null,'',location.pathname+(q.toString()?'?'+q:'')+location.hash);}
   const h=new URLSearchParams(location.hash.replace(/^#/,''));const ed=h.get('error_description')||h.get('error');
-  if(ed){S.linkError=/expired|invalid/i.test(ed)?'That sign-in link has expired or was already used. Enter your email and we\'ll send a fresh one.':ed;history.replaceState(null,'',location.pathname+location.search);}
+  if(ed){S.linkError=/signups? not allowed|not allowed for this instance/i.test(ed)?'There is no Studio account for that email yet. Sign in with the email your invite was sent to, or ask your workspace owner to invite you.':/expired|invalid/i.test(ed)?'That sign-in link has expired or was already used. Enter your email and we\'ll send a fresh one.':ed;history.replaceState(null,'',location.pathname+location.search);}
  }catch(e){}})();
  const sb=window.supabase.createClient(C.supabase.url,C.supabase.anonKey,{auth:{lock:ctAuthLock}});
  // Error reports: each distinct message once per page load, at most 20 per load.
@@ -103,9 +104,9 @@ async function ctAuthLock(name,acquireTimeout,fn){
  // Approval emails (notify edge function). Fire and forget: a failed email never blocks the approval.
  S.notify=(fileId,event)=>{setTimeout(()=>{sb.functions.invoke('notify',{body:{file_id:fileId,event}}).then(({data,error})=>{if(error||(data&&data.error))S.logError(new Error('notify '+event+': '+((data&&data.error)||(error&&error.message)||'failed')),'email');},e=>S.logError(e,'email'));},1200);};
  S.confirmLink=async()=>{const p=S.pendingLink;if(!p)return;const {error}=await sb.auth.verifyOtp({token_hash:p.token_hash,type:p.type});
-  const clean=()=>history.replaceState(null,'',location.pathname+(p.type==='recovery'?'#/account':''));
+  const clean=()=>history.replaceState(null,'',location.pathname);
   if(error){S.pendingLink=null;clean();throw new Error(/expired|invalid/i.test(error.message)?'That link has expired or was already used. Enter your email and we\'ll send a fresh one.':error.message);}
-  S.pendingLink=null;clean();if(window.ctTrack)ctTrack.event(p.type==='invite'||p.type==='signup'?'sign_up':'login',{method:'email_link'});};
+  S.pendingLink=null;if(p.type==='invite'||p.type==='recovery')S.needPassword=p.type;clean();if(window.ctTrack)ctTrack.event(p.type==='invite'||p.type==='signup'?'sign_up':'login',{method:'email_link'});};
  let live=null,filesCh=null,libCh=null,lt=null;
  const fromRow=r=>{const d=r.data||{};return {...d,id:r.id,owner:r.uid,email:r.email,status:r.status,comment:r.comment||'',createdAt:r.at,updatedAt:d.updatedAt||r.at,ownerName:d.ownerName||d.by||(r.email||'').split('@')[0]};};
  const loadFiles=async()=>{if(!workspace)return;const {data,error}=await sb.from('requests').select('*').eq('workspace_id',workspace.id);if(error){console.error(error);return;}files=data.map(fromRow);pubFiles();};
@@ -131,6 +132,15 @@ async function ctAuthLock(name,acquireTimeout,fn){
  function stopLive(){if(live){sb.removeChannel(live);live=null;}presence=[];emit('presence',[]);}
  S.onAuth=cb=>{authCb=cb;let last;const go=async s=>{const k=s?s.user.id:'none';if(k===last)return;last=k;const r=await resolve(s);S.me=r.user;if(r.user){startLive();loadFiles();loadLib();prepareKitLogos();loadTemplates();if(!filesCh)filesCh=sb.channel('db-requests').on('postgres_changes',{event:'*',schema:'public',table:'requests'},loadFilesSoon).subscribe();if(!libCh)libCh=sb.channel('db-library').on('postgres_changes',{event:'*',schema:'public',table:'library'},loadLib).subscribe();}else stopLive();cb(r.user,r.err);};sb.auth.getSession().then(({data})=>go(data.session));const {data:{subscription}}=sb.auth.onAuthStateChange((_e,s)=>{setTimeout(()=>go(s),0);});return()=>subscription.unsubscribe();};
  S.signInGoogle=async()=>{const {error}=await sb.auth.signInWithOAuth({provider:'google',options:{redirectTo:location.origin+location.pathname,queryParams:{prompt:'select_account'}}});if(error)throw error;};
+ // Sign-in: email + password first; Google / GitHub when switched on in Supabase (read from the auth settings, so
+ // a provider's button only shows once it's configured); email links stay as a fallback.
+ S.providers=async()=>{if(S._prov)return S._prov;try{const r=await fetch(C.supabase.url+'/auth/v1/settings',{headers:{apikey:C.supabase.anonKey}});const j=await r.json();S._prov=['google','github'].filter(k=>j&&j.external&&j.external[k]);}catch(e){S._prov=[];}return S._prov;};
+ S.signInPassword=async(email,pw)=>{const {error}=await sb.auth.signInWithPassword({email:email.trim().toLowerCase(),password:pw});
+  if(error)throw new Error(/invalid login|invalid credentials/i.test(error.message)?'That email and password don\'t match. No password yet? Choose "Forgot or no password?" to set one.':/not confirmed/i.test(error.message)?'Open the invite email first to confirm your address.':error.message);
+  if(window.ctTrack)ctTrack.event('login',{method:'password'});};
+ S.signInOAuth=async provider=>{const {error}=await sb.auth.signInWithOAuth({provider,options:{redirectTo:location.origin+location.pathname,queryParams:provider==='google'?{prompt:'select_account'}:undefined}});if(error)throw error;};
+ S.sendReset=async email=>{const {error}=await sb.auth.resetPasswordForEmail(email.trim().toLowerCase(),{redirectTo:location.origin+location.pathname});if(error)throw error;};
+ S.choosePassword=async pw=>{const {error}=await sb.auth.updateUser({password:pw});if(error)throw new Error(/should be different/i.test(error.message)?'That\'s your current password. Choose a new one.':/weak|short|at least/i.test(error.message)?'Use at least 8 characters, mixing letters and numbers.':error.message);S.needPassword=null;};
  S.sendLink=async e=>{const {error}=await sb.auth.signInWithOtp({email:e.trim().toLowerCase(),options:{emailRedirectTo:location.origin+location.pathname}});if(error)throw error;};
  S.signOut=async()=>{stopLive();S.role=null;await sb.auth.signOut();};
  const loadTemplates=async()=>{if(!workspace)return;const {data,error}=await sb.from('templates').select('id,workspace_id,key,name,spec,published,version').or('workspace_id.is.null,workspace_id.eq.'+workspace.id).eq('published',true);if(error){console.warn('templates',error.message);return;}if(window.ctSetDbTemplates)window.ctSetDbTemplates((data||[]).map(r=>({...r.spec,id:r.key,name:r.name,dbId:r.id,scope:r.workspace_id?'workspace':'global'})));emit('templates',data||[]);};
