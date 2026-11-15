@@ -24,7 +24,7 @@ const sec=(id,n,title,p)=><div className="gl-sh"><span className="gl-n">{n}</spa
 return <main className="gl">
 <aside className="gl-nav"><span className="gl-k">Brand guidelines</span>{GL_SECTIONS.map(([id,l])=><button key={id} className={active===id?'on':''} onClick={()=>jump(id)}>{l}</button>)}{pdf&&<a className="btn sm gl-dl" href={pdf} target="_blank" rel="noopener"><UiIcon n="file-down" s={14}/>Previous edition (PDF)</a>}</aside>
 <div className="gl-body">
-<header className="gl-hero"><T6Bg t={night} W={1100} H={420}/><div className="gl-hero-in"><img src="assets/brand26/wordmark-white.svg" alt="colorteam" className="gl-hero-logo"/><h1>Design Beyond<br/><span style={{color:'#F2B0CD'}}>Boundaries</span></h1><div className="gl-hero-m"><span>colorteam</span><span>Brand guidelines</span><span>2026</span></div></div></header>
+<header className="gl-hero"><T6Bg t={night} W={1100} H={420}/><div className="gl-hero-in"><img src="assets/brand26/wordmark-white.svg" alt="colorteam" className="gl-hero-logo"/><h1>Design Beyond<br/><span style={{color:'#F2B0CD'}}>Boundaries</span></h1><div className="gl-hero-m"><span><img src="assets/brand26/wordmark-white.svg" alt="Colorteam" style={{height:12,verticalAlign:"middle"}}/></span><span>Brand guidelines</span><span>2026</span></div></div></header>
 
 <section id="gl-colour" className="gl-s">{sec('colour','01','Colour','Black and stone carry everything, and pink is the one accent. Lime is a second accent, kept for small moments and the podcast. Click a swatch to copy its hex.')}
 <div className="gl-prim">{GL_PRIMARY.map(([n,h,i,d])=>sw(n,h,i,d,true))}</div>

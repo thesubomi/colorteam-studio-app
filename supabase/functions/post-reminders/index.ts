@@ -17,7 +17,7 @@ function page(heading: string, lead: string, quote: string, button: string, link
   return `<!doctype html><html><body style="margin:0;background:#F4F4F2;font-family:Inter,-apple-system,Segoe UI,Helvetica,Arial,sans-serif;color:#161616">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#F4F4F2;padding:40px 16px"><tr><td align="center">
 <table role="presentation" width="480" cellpadding="0" cellspacing="0" style="max-width:480px;width:100%;background:#FFFFFF;border-radius:20px;padding:36px">
-<tr><td style="font-weight:800;font-size:22px;letter-spacing:-0.04em">colorteam <span style="font-weight:500;color:#57554D;letter-spacing:0">Studio</span></td></tr>
+<tr><td style="font-size:22px;line-height:22px"><img src="https://colorteam.io/email/colorteam-wordmark-black.png" width="124" height="22" alt="Colorteam" style="display:inline-block;vertical-align:middle;border:0;outline:none;text-decoration:none;height:22px;width:124px"> <span style="font-weight:500;font-size:21px;color:#57554D;vertical-align:middle;letter-spacing:0">Studio</span></td></tr>
 <tr><td style="padding-top:28px;font-size:22px;font-weight:700;letter-spacing:-0.02em;line-height:1.25">${heading}</td></tr>
 <tr><td style="padding-top:12px;font-size:15px;line-height:1.55;color:#57554D">${lead}</td></tr>
 ${quote ? `<tr><td style="padding-top:14px"><div style="border-left:3px solid #F2B0CD;padding:6px 0 6px 12px;font-size:14px;line-height:1.5;color:#161616;white-space:pre-wrap;word-break:break-word">${quote}</div></td></tr>` : ""}
