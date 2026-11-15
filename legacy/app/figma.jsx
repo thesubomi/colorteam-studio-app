@@ -12,7 +12,7 @@ const fgHuman=k=>k.replace(/[-_]/g,' ').replace(/^\w/,c=>c.toUpperCase());
 // Colour → role, using the target workspace's kit when there is one, else the Colorteam palette.
 function fgRoleMap(kit){const m={};const add=(hex,role)=>{if(hex&&!m[hex.toUpperCase()])m[hex.toUpperCase()]=role;};
  if(kit&&kit.colors)kit.colors.forEach(c=>add(c.hex,c.role==='accent 2'?'accent':c.role));
- else{add('#0A0A0A','ground');add('#161616','surface');add('#E6E4DA','ink');add('#F2B0CD','accent');add('#A3A199','muted');add('#DEDCD0','ink');add('#FFFFFF','ink');}
+ else{add('#0A0A0A','ground');add('#161616','surface');add('#E6E4DA','ink');add('#A8FC78','accent');add('#A3A199','muted');add('#DEDCD0','ink');add('#FFFFFF','ink');}
  return m;}
 const fgColor=(hex,roles,fallback)=>hex?(roles[hex.toUpperCase()]||hex):fallback;
 

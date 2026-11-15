@@ -1,7 +1,7 @@
 // Brand kit editor: the structured source of truth for a client workspace.
 // Colours with roles, type, logos, imagery rules and voice. Templates read from this (step 45).
 const KIT_ROLES=['ground','surface','ink','accent','accent 2','muted'];
-const KIT_EMPTY={colors:[{name:'Ground',hex:'#111111',role:'ground'},{name:'Surface',hex:'#FFFFFF',role:'surface'},{name:'Ink',hex:'#111111',role:'ink'},{name:'Accent',hex:'#F2B0CD',role:'accent'}],
+const KIT_EMPTY={colors:[{name:'Ground',hex:'#111111',role:'ground'},{name:'Surface',hex:'#FFFFFF',role:'surface'},{name:'Ink',hex:'#111111',role:'ink'},{name:'Accent',hex:'#A8FC78',role:'accent'}],
  fonts:{display:'Inter',body:'Inter',serif:''},logos:[],imagery:'',voice:'',dont:''};
 function kitHex(h){h=String(h||'').trim();if(/^[0-9a-f]{6}$/i.test(h))h='#'+h;return /^#[0-9a-f]{6}$/i.test(h)?h.toUpperCase():null;}
 

@@ -20,7 +20,7 @@ function page(heading: string, lead: string, quote: string, button: string, link
 <tr><td style="font-size:22px;line-height:22px"><img src="https://colorteam.io/email/colorteam-wordmark-black.png" width="124" height="22" alt="Colorteam" style="display:inline-block;vertical-align:middle;border:0;outline:none;text-decoration:none;height:22px;width:124px"> <span style="font-weight:500;font-size:21px;color:#57554D;vertical-align:middle;letter-spacing:0">Studio</span></td></tr>
 <tr><td style="padding-top:28px;font-size:22px;font-weight:700;letter-spacing:-0.02em;line-height:1.25">${heading}</td></tr>
 <tr><td style="padding-top:12px;font-size:15px;line-height:1.55;color:#57554D">${lead}</td></tr>
-${quote ? `<tr><td style="padding-top:14px"><div style="border-left:3px solid #F2B0CD;padding:6px 0 6px 12px;font-size:14px;line-height:1.5;color:#161616;white-space:pre-wrap;word-break:break-word">${quote}</div></td></tr>` : ""}
+${quote ? `<tr><td style="padding-top:14px"><div style="border-left:3px solid #A8FC78;padding:6px 0 6px 12px;font-size:14px;line-height:1.5;color:#161616;white-space:pre-wrap;word-break:break-word">${quote}</div></td></tr>` : ""}
 <tr><td style="padding-top:26px"><a href="${link}" style="display:inline-block;background:#161616;color:#FFFFFF;text-decoration:none;font-weight:600;font-size:15px;padding:13px 22px;border-radius:12px">${button}</a></td></tr>
 <tr><td style="padding-top:22px;font-size:13px;line-height:1.5;color:#8B8A82">You get this because you're on this workspace in Colorteam Studio.</td></tr>
 </table><p style="font-size:12px;color:#8B8A82;margin:18px 0 0">Colorteam · Warsaw · <a href="https://colorteam.io" style="color:#8B8A82">colorteam.io</a></p>
