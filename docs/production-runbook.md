@@ -56,6 +56,8 @@ Edge Functions > Secrets. Archie pastes values; names:
 
 Deploy all eight from `supabase/functions` with JWT verification **off** (each one checks the caller itself): `stripe-webhook`, `invite`, `notify`, `billing-portal`, `hubspot-sync`, `ai`, `mcp`, `post-reminders`. Seven are single `index.ts` files. `mcp` also needs `server.ts` and `templates.json`; if the dashboard editor won't take three files, deploy it with the CLI (`supabase functions deploy mcp --no-verify-jwt --project-ref vxuqsfyvvchwqzvdjjfs`).
 
+Done 2026-11-20: all eight deployed from the dashboard editor (mcp's index.ts is already bundled, one file), JWT verification off on each, `APP_URL` set. Still to paste: SMTP_USER, SMTP_PASS, HUBSPOT_TOKEN, ANTHROPIC_API_KEY, then the two Stripe secrets at live mode. Schedule the reminder job (step 2) once app.colorteam.io is live, so reminder emails link to a working app.
+
 ## 5. app.colorteam.io (task 45)
 
 GitHub Pages allows one custom domain per repo, and this repo serves app-staging.colorteam.io.
