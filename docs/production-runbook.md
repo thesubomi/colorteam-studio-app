@@ -25,7 +25,8 @@ Write the three counts in the tracker note for task 42. Drop the schema a week a
 Apply `supabase/migrations/0002` to `0013` in order, one file per SQL editor run. After each file, run `supabase/tests/rls_workspaces.sql` as a separate run (it ends in rollback, so never paste it together with a migration). Stop at the first failure.
 
 - `0002_workspaces.sql` already moves the current team, requests and files into the Colorteam workspace (task 32). Check afterwards: `select count(*) from requests where workspace_id is null;` returns 0, and the counts match step 1.
-- `0012_post_reminders.sql` needs the pg_net and pg_cron extensions (Database > Extensions; the file enables them, the dashboard may ask to confirm). Then run once: `select public.schedule_post_reminders('https://vxuqsfyvvchwqzvdjjfs.supabase.co');`
+- `0012_post_reminders.sql` needs the pg_net and pg_cron extensions (the file enables them). Only after the `post-reminders` function is deployed (step 4), run once: `select public.schedule_post_reminders('https://vxuqsfyvvchwqzvdjjfs.supabase.co');`
+- Done 2026-11-20: safety copy (7 / 82 / 5), 0002 to 0013 applied, RLS test passed (see supabase/README.md for the production test tweak).
 - Update the table in `supabase/README.md` with the date for each file.
 
 ## 3. Sign-in (task 44)

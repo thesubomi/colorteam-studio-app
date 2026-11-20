@@ -12,16 +12,20 @@ Auth: email sign-in links (and password), Google sign-in available. Redirect URL
 | File | Production | Staging |
 |---|---|---|
 | 0001_baseline.sql | is the baseline | 2026-11-04 |
-| 0002_workspaces.sql | not yet | 2026-11-04 |
-| 0003_guidelines_storage.sql | not yet | 2026-11-04 |
-| 0004_brand_kit_assets.sql | not yet | 2026-11-04 |
-| 0005_templates.sql | not yet | 2026-11-05 |
-| 0006_template_requests.sql | not yet | 2026-11-05 |
-| 0007_protect_plan.sql | not yet | 2026-11-05 (trigger re-attached by 0008) |
-| 0008_plan_limits.sql | not yet | 2026-11-05 |
-| 0009_deliverables.sql | not yet | 2026-11-05 |
-| 0010_app_errors.sql | not yet | 2026-11-05 |
-| 0011_api_keys.sql | not yet | 2026-11-05 |
+| 0002_workspaces.sql | 2026-11-20 | 2026-11-04 |
+| 0003_guidelines_storage.sql | 2026-11-20 | 2026-11-04 |
+| 0004_brand_kit_assets.sql | 2026-11-20 | 2026-11-04 |
+| 0005_templates.sql | 2026-11-20 | 2026-11-05 |
+| 0006_template_requests.sql | 2026-11-20 | 2026-11-05 |
+| 0007_protect_plan.sql | 2026-11-20 | 2026-11-05 (trigger re-attached by 0008) |
+| 0008_plan_limits.sql | 2026-11-20 | 2026-11-05 |
+| 0009_deliverables.sql | 2026-11-20 | 2026-11-05 |
+| 0010_app_errors.sql | 2026-11-20 | 2026-11-05 |
+| 0011_api_keys.sql | 2026-11-20 | 2026-11-05 |
+| 0012_post_reminders.sql | 2026-11-20 (reminder job not scheduled until the functions are deployed) | 2026-11-05 |
+| 0013_ai_usage.sql | 2026-11-20 | 2026-11-05 |
+
+Production differs from the baseline in one way: `requests.uid` has a foreign key to `auth.users`, so on production the RLS test needs its four fake users inserted into `auth.users` right after `begin;` (they roll back with the rest). Production run 2026-11-20: safety copy in schema `backup_20261120` (7 members, 82 requests, 5 library), 0002 to 0013 applied, RLS test passed.
 
 Apply a migration on its own, then run `tests/rls_workspaces.sql` as a separate run: the test ends in `rollback`, and the SQL editor runs everything pasted in one transaction, so a migration pasted together with the test is undone with it.
 
